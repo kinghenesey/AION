@@ -10,6 +10,9 @@ import time
 
 from config import AION_EXTENSION, Color
 from cli import print_error, print_info, print_success, print_separator
+from lexer import Lexer, LexerError
+from parser.parser import Parser, ParseError
+from interpreter.interpreter import Interpreter, RuntimeError
 
 
 class AIONRunner:
@@ -91,8 +94,6 @@ class AIONRunner:
         print_info(f"Running '{self.filepath}' ...")
         print()
 
-        from lexer import Lexer, LexerError
-        from parser import Parser, ParseError
         try:
             # Phase 2 — Lexer
             lexer  = Lexer(self.source)
@@ -114,12 +115,20 @@ class AIONRunner:
                     print(f"  {Color.MAGENTA}{stmt}{Color.RESET}")
                 print()
 
+            # Phase 4 — Interpreter
+            interpreter = Interpreter()
+            interpreter.execute(program)
+
         except LexerError as e:
             print_error(f"Syntax Error:{e}")
             return 1
 
         except ParseError as e:
             print_error(f"Parse Error:{e}")
+            return 1
+
+        except RuntimeError as e:
+            print_error(f"Runtime Error:{e}")
             return 1
 
         # ───────────────────────────────────────────────────────

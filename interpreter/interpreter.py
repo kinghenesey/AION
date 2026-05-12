@@ -1,0 +1,365 @@
+# =============================================================
+# AION Interpreter — Main Execution Engine
+# =============================================================
+# The Interpreter walks the AST tree and executes each node.
+#
+# Process:
+#   1. Receive the root Program node
+#   2. Execute each statement one by one
+#   3. For each node type call the matching execute_ method
+#   4. Return the result
+#
+# This is called a "tree-walk interpreter" — the simplest
+# and most readable interpreter architecture possible.
+
+from parser.nodes import (
+    Program, IntegerLiteral, FloatLiteral, StringLiteral,
+    BooleanLiteral, NullLiteral, Identifier, BinaryOp,
+    UnaryOp, AssignStatement, ShowStatement, IfStatement,
+    RepeatStatement, TaskStatement, ReturnStatement,
+    UseStatement, CallExpression
+)
+from interpreter.environment import Environment
+from runtime import ReturnSignal
+
+
+class RuntimeError(Exception):
+    """Raised when something goes wrong during execution."""
+    def __init__(self, message: str, line: int = 0):
+        self.line = line
+        super().__init__(f"\n  {message}")
+
+
+class Interpreter:
+    """
+    Executes an AION AST produced by the Parser.
+
+    Usage:
+        interpreter = Interpreter()
+        interpreter.execute(program)
+    """
+
+    def __init__(self):
+        # Global environment — lives for the entire program
+        self.globals = Environment()
+        self.env     = self.globals
+
+        # Built-in functions available everywhere in AION
+        self._register_builtins()
+
+    # ----------------------------------------------------------
+    # Public interface
+    # ----------------------------------------------------------
+
+    def execute(self, program: Program):
+        """Execute a full AION program."""
+        for statement in program.statements:
+            self._execute_node(statement)
+
+    # ----------------------------------------------------------
+    # Node dispatcher
+    # ----------------------------------------------------------
+
+    def _execute_node(self, node):
+        """
+        Route a node to its matching execute method.
+        This is the heart of the interpreter.
+        """
+        method_name = f"_exec_{type(node).__name__}"
+        method      = getattr(self, method_name, None)
+
+        if method is None:
+            raise RuntimeError(
+                f"AION doesn't know how to execute "
+                f"'{type(node).__name__}' yet."
+            )
+
+        return method(node)
+
+    # ----------------------------------------------------------
+    # Statement executors
+    # ----------------------------------------------------------
+
+    def _exec_Program(self, node: Program):
+        for stmt in node.statements:
+            self._execute_node(stmt)
+
+    def _exec_AssignStatement(self, node: AssignStatement):
+        """Execute:  name = value"""
+        value = self._execute_node(node.value)
+        self.env.set(node.name, value)
+        return value
+
+    def _exec_ShowStatement(self, node: ShowStatement):
+        """Execute:  show <expression>"""
+        value = self._execute_node(node.expression)
+        print(self._to_string(value))
+        return value
+
+    def _exec_IfStatement(self, node: IfStatement):
+        """
+        Execute:
+            if <condition>:
+                <then_body>
+            else:
+                <else_body>
+        """
+        condition = self._execute_node(node.condition)
+
+        if self._is_truthy(condition):
+            self._execute_block(node.then_body)
+        else:
+            self._execute_block(node.else_body)
+
+    def _exec_RepeatStatement(self, node: RepeatStatement):
+        """
+        Execute:
+            repeat <count>:
+                <body>
+        """
+        count = self._execute_node(node.count)
+
+        if not isinstance(count, (int, float)):
+            raise RuntimeError(
+                f"'repeat' needs a number, not '{count}'.\n"
+                f"  Example:  repeat 5:"
+            )
+
+        for _ in range(int(count)):
+            self._execute_block(node.body)
+
+    def _exec_TaskStatement(self, node: TaskStatement):
+        """
+        Execute:  task greet(name): ...
+        Stores the task definition in the environment.
+        The task body is NOT executed yet — only when called.
+        """
+        self.env.set(node.name, node)
+
+    def _exec_ReturnStatement(self, node: ReturnStatement):
+        """
+        Execute:  return <value>
+        Raises ReturnSignal to unwind the call stack.
+        """
+        value = None
+        if node.value is not None:
+            value = self._execute_node(node.value)
+        raise ReturnSignal(value)
+
+    def _exec_UseStatement(self, node: UseStatement):
+        """
+        Execute:  use <module>
+        Loads a standard library module into the environment.
+        Full stdlib comes in Phase 5 — for now we acknowledge it.
+        """
+        module_name = node.module
+        stdlib = self._load_stdlib(module_name)
+        if stdlib:
+            for name, func in stdlib.items():
+                self.env.set(name, func)
+        else:
+            raise RuntimeError(
+                f"Module '{module_name}' was not found.\n"
+                f"  Available modules will grow in Phase 5."
+            )
+
+    def _exec_CallExpression(self, node: CallExpression):
+        """
+        Execute:  greet("Emmanuel")
+        Looks up the task and runs it with the given arguments.
+        """
+        # Check built-ins first
+        callee = self.env.get(node.name)
+
+        # Evaluate all arguments
+        args = [self._execute_node(arg) for arg in node.args]
+
+        # Built-in Python function
+        if callable(callee) and not isinstance(callee, TaskStatement):
+            return callee(*args)
+
+        # AION task
+        if isinstance(callee, TaskStatement):
+            return self._call_task(callee, args)
+
+        raise RuntimeError(
+            f"'{node.name}' is not a task you can call.\n"
+            f"  Define it first with:  task {node.name}(...):"
+        )
+
+    # ----------------------------------------------------------
+    # Expression evaluators
+    # ----------------------------------------------------------
+
+    def _exec_BinaryOp(self, node: BinaryOp):
+        """Evaluate a binary operation like age + 1 or x == y."""
+        left  = self._execute_node(node.left)
+        right = self._execute_node(node.right)
+        op    = node.operator
+
+        try:
+            if op == "+":
+                # Support string concatenation
+                if isinstance(left, str) or isinstance(right, str):
+                    return self._to_string(left) + self._to_string(right)
+                return left + right
+            if op == "-":  return left - right
+            if op == "*":  return left * right
+            if op == "/":
+                if right == 0:
+                    raise RuntimeError(
+                        "Cannot divide by zero.\n"
+                        "  Check your divisor value."
+                    )
+                return left / right
+            if op == "%":  return left % right
+            if op == "**": return left ** right
+            if op == "==": return left == right
+            if op == "!=": return left != right
+            if op == "<":  return left <  right
+            if op == "<=": return left <= right
+            if op == ">":  return left >  right
+            if op == ">=": return left >= right
+
+        except TypeError:
+            raise RuntimeError(
+                f"Cannot use '{op}' between "
+                f"'{type(left).__name__}' and '{type(right).__name__}'.\n"
+                f"  Check that both values are the right type."
+            )
+
+        raise RuntimeError(f"Unknown operator '{op}'.")
+
+    def _exec_UnaryOp(self, node: UnaryOp):
+        """Evaluate a unary operation like -x or not true."""
+        operand = self._execute_node(node.operand)
+
+        if node.operator == "-":
+            return -operand
+        if node.operator == "not":
+            return not self._is_truthy(operand)
+
+        raise RuntimeError(f"Unknown operator '{node.operator}'.")
+
+    # ── Literals ──────────────────────────────────────────────
+
+    def _exec_IntegerLiteral(self, node: IntegerLiteral):
+        return node.value
+
+    def _exec_FloatLiteral(self, node: FloatLiteral):
+        return node.value
+
+    def _exec_StringLiteral(self, node: StringLiteral):
+        return node.value
+
+    def _exec_BooleanLiteral(self, node: BooleanLiteral):
+        return node.value
+
+    def _exec_NullLiteral(self, node: NullLiteral):
+        return None
+
+    def _exec_Identifier(self, node: Identifier):
+        """Look up a variable's value in the current scope."""
+        try:
+            return self.env.get(node.name)
+        except NameError as e:
+            raise RuntimeError(str(e))
+
+    # ----------------------------------------------------------
+    # Helpers
+    # ----------------------------------------------------------
+
+    def _execute_block(self, statements: list):
+        """
+        Execute a list of statements in a new child scope.
+        Variables created here won't leak into the parent scope.
+        """
+        previous = self.env
+        self.env = Environment(parent=previous)
+        try:
+            for stmt in statements:
+                self._execute_node(stmt)
+        finally:
+            # Always restore previous scope even if error occurs
+            self.env = previous
+
+    def _call_task(self, task: TaskStatement, args: list):
+        """
+        Execute a task with the given arguments.
+        Creates a fresh local scope for the task.
+        """
+        if len(args) != len(task.params):
+            raise RuntimeError(
+                f"Task '{task.name}' expects "
+                f"{len(task.params)} argument(s) "
+                f"but got {len(args)}."
+            )
+
+        # Create a new local scope with params as variables
+        local_env    = Environment(parent=self.globals)
+        previous_env = self.env
+
+        for param, value in zip(task.params, args):
+            local_env.set(param, value)
+
+        self.env = local_env
+
+        try:
+            for stmt in task.body:
+                self._execute_node(stmt)
+            return None
+
+        except ReturnSignal as r:
+            return r.value
+
+        finally:
+            self.env = previous_env
+
+    def _is_truthy(self, value) -> bool:
+        """
+        Determine if a value is considered true in AION.
+        Rules:
+            null  → false
+            false → false
+            0     → false
+            ""    → false
+            everything else → true
+        """
+        if value is None:        return False
+        if value is False:       return False
+        if value == 0:           return False
+        if value == "":          return False
+        return True
+
+    def _to_string(self, value) -> str:
+        """Convert any AION value to a printable string."""
+        if value is None:        return "null"
+        if value is True:        return "true"
+        if value is False:       return "false"
+        return str(value)
+
+    def _register_builtins(self):
+        """Register built-in functions available in all AION programs."""
+        self.globals.set("type_of", lambda x: type(x).__name__)
+        self.globals.set("to_number", lambda x: float(x)
+                         if "." in str(x) else int(x))
+        self.globals.set("to_text",   lambda x: str(x))
+        self.globals.set("length",    lambda x: len(x))
+
+    def _load_stdlib(self, name: str) -> dict:
+        """
+        Load a standard library module.
+        Full implementation comes in Phase 5.
+        Returns a dict of name → callable.
+        """
+        # Basic math module preview
+        if name == "math":
+            import math
+            return {
+                "sqrt":  math.sqrt,
+                "floor": math.floor,
+                "ceil":  math.ceil,
+                "abs":   abs,
+                "round": round,
+            }
+        return None
