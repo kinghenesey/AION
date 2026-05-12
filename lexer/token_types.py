@@ -1,0 +1,90 @@
+# =============================================================
+# AION Lexer — Token Types
+# =============================================================
+# Every possible token in the AION language is defined here.
+# Think of these as labels — the lexer will attach one of
+# these labels to every piece of code it reads.
+
+from enum import Enum, auto
+
+
+class TokenType(Enum):
+
+    # ── Literals ──────────────────────────────────────────────
+    # Raw values written directly in code
+    INTEGER     = auto()   # 42
+    FLOAT       = auto()   # 3.14
+    STRING      = auto()   # "hello"
+    BOOLEAN     = auto()   # true / false
+    NULL        = auto()   # null
+
+    # ── Identifiers ───────────────────────────────────────────
+    # Variable names, function names, etc.
+    IDENTIFIER  = auto()   # name, age, result
+
+    # ── Keywords ──────────────────────────────────────────────
+    # Reserved words that mean something in AION
+    SHOW        = auto()   # show
+    IF          = auto()   # if
+    ELSE        = auto()   # else
+    REPEAT      = auto()   # repeat
+    TASK        = auto()   # task (functions)
+    RETURN      = auto()   # return
+    USE         = auto()   # use (imports)
+    AND         = auto()   # and
+    OR          = auto()   # or
+    NOT         = auto()   # not
+
+    # ── Operators ─────────────────────────────────────────────
+    PLUS        = auto()   # +
+    MINUS       = auto()   # -
+    MULTIPLY    = auto()   # *
+    DIVIDE      = auto()   # /
+    MODULO      = auto()   # %
+    POWER       = auto()   # **
+
+    # ── Comparison ────────────────────────────────────────────
+    EQUALS      = auto()   # ==
+    NOT_EQUALS  = auto()   # !=
+    LESS        = auto()   # <
+    LESS_EQ     = auto()   # <=
+    GREATER     = auto()   # >
+    GREATER_EQ  = auto()   # >=
+
+    # ── Assignment ────────────────────────────────────────────
+    ASSIGN      = auto()   # =
+
+    # ── Punctuation ───────────────────────────────────────────
+    COLON       = auto()   # :
+    COMMA       = auto()   # ,
+    LPAREN      = auto()   # (
+    RPAREN      = auto()   # )
+    LBRACKET    = auto()   # [
+    RBRACKET    = auto()   # ]
+
+    # ── Structure ─────────────────────────────────────────────
+    NEWLINE     = auto()   # end of line
+    INDENT      = auto()   # increased indentation
+    DEDENT      = auto()   # decreased indentation
+    EOF         = auto()   # end of file
+
+
+# ── Keyword map ───────────────────────────────────────────────
+# Maps raw strings to their token type.
+# When the lexer sees the word "show" it looks it up here.
+
+KEYWORDS = {
+    "show":   TokenType.SHOW,
+    "if":     TokenType.IF,
+    "else":   TokenType.ELSE,
+    "repeat": TokenType.REPEAT,
+    "task":   TokenType.TASK,
+    "return": TokenType.RETURN,
+    "use":    TokenType.USE,
+    "and":    TokenType.AND,
+    "or":     TokenType.OR,
+    "not":    TokenType.NOT,
+    "true":   TokenType.BOOLEAN,
+    "false":  TokenType.BOOLEAN,
+    "null":   TokenType.NULL,
+}

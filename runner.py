@@ -91,10 +91,20 @@ class AIONRunner:
         print_info(f"Running '{self.filepath}' ...")
         print()
 
-        for line in self.source.splitlines():
-            stripped = line.strip()
-            if stripped and not stripped.startswith("#"):
-                print(f"  {Color.DIM}>{Color.RESET} {stripped}")
+        from lexer import Lexer, LexerError
+        try:
+            lexer  = Lexer(self.source)
+            tokens = lexer.tokenize()
+
+            if self.debug:
+                print_info("Tokens:")
+                for token in tokens:
+                    print(f"  {Color.CYAN}{token}{Color.RESET}")
+                print()
+
+        except LexerError as e:
+            print_error(f"Syntax Error:{e}")
+            return 1
 
         # ───────────────────────────────────────────────────────
         elapsed = (time.perf_counter() - start) * 1000
