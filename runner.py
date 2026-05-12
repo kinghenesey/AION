@@ -92,7 +92,9 @@ class AIONRunner:
         print()
 
         from lexer import Lexer, LexerError
+        from parser import Parser, ParseError
         try:
+            # Phase 2 — Lexer
             lexer  = Lexer(self.source)
             tokens = lexer.tokenize()
 
@@ -102,8 +104,22 @@ class AIONRunner:
                     print(f"  {Color.CYAN}{token}{Color.RESET}")
                 print()
 
+            # Phase 3 — Parser
+            parser  = Parser(tokens)
+            program = parser.parse()
+
+            if self.debug:
+                print_info("AST:")
+                for stmt in program.statements:
+                    print(f"  {Color.MAGENTA}{stmt}{Color.RESET}")
+                print()
+
         except LexerError as e:
             print_error(f"Syntax Error:{e}")
+            return 1
+
+        except ParseError as e:
+            print_error(f"Parse Error:{e}")
             return 1
 
         # ───────────────────────────────────────────────────────
