@@ -1,0 +1,15 @@
+# My first AION program
+
+name = "Emmanuel"
+age  = 20
+
+show "Welcome to AION"
+show "Hello " + name
+
+if age >= 18:
+    show "You are an adult"
+else:
+    show "You are a minor"
+
+repeat 3:
+    show "AION is alive!"
