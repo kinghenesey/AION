@@ -1,0 +1,26 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+
+# AION installed packages (generated files)
+packages/auth.py
+packages/random.py
+packages/validation.py
+packages/colors.py
+packages/charts.py
+packages/registry.json
+
+# Environment variables (API keys)
+.env
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
