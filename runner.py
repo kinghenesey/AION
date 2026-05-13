@@ -10,9 +10,13 @@ import time
 
 from config import AION_EXTENSION, Color
 from cli import print_error, print_info, print_success, print_separator
+from cli.error_display import display_error
 from lexer import Lexer, LexerError
 from parser.parser import Parser, ParseError
-from interpreter.interpreter import Interpreter, RuntimeError
+from interpreter.interpreter import (
+    Interpreter, RuntimeError,
+    AIONImportError, AIONNameError
+)
 
 
 class AIONRunner:
@@ -120,15 +124,53 @@ class AIONRunner:
             interpreter.execute(program)
 
         except LexerError as e:
-            print_error(f"Syntax Error:{e}")
+            display_error(
+                error_type="SyntaxError",
+                message=str(e),
+                source=self.source,
+                filepath=self.filepath,
+                line=getattr(e, "line", 0),
+            )
             return 1
 
         except ParseError as e:
-            print_error(f"Parse Error:{e}")
+            display_error(
+                error_type="ParseError",
+                message=str(e),
+                source=self.source,
+                filepath=self.filepath,
+                line=getattr(e, "line", 0),
+            )
+            return 1
+
+        except AIONNameError as e:
+            display_error(
+                error_type="NameError",
+                message=str(e),
+                source=self.source,
+                filepath=self.filepath,
+                line=getattr(e, "line", 0),
+            )
+            return 1
+
+        except AIONImportError as e:
+            display_error(
+                error_type="ImportError",
+                message=str(e),
+                source=self.source,
+                filepath=self.filepath,
+                line=getattr(e, "line", 0),
+            )
             return 1
 
         except RuntimeError as e:
-            print_error(f"Runtime Error:{e}")
+            display_error(
+                error_type="RuntimeError",
+                message=str(e),
+                source=self.source,
+                filepath=self.filepath,
+                line=getattr(e, "line", 0),
+            )
             return 1
 
         # ───────────────────────────────────────────────────────

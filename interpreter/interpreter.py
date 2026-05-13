@@ -29,6 +29,19 @@ class RuntimeError(Exception):
         self.line = line
         super().__init__(f"\n  {message}")
 
+class AIONImportError(Exception):
+    """Raised when a module cannot be found."""
+    def __init__(self, message: str, line: int = 0):
+        self.line = line
+        super().__init__(f"\n  {message}")
+
+
+class AIONNameError(Exception):
+    """Raised when a variable is not found."""
+    def __init__(self, message: str, line: int = 0):
+        self.line = line
+        super().__init__(f"\n  {message}")
+
 
 class Interpreter:
     """
@@ -147,21 +160,14 @@ class Interpreter:
         raise ReturnSignal(value)
 
     def _exec_UseStatement(self, node: UseStatement):
-        """
-        Execute:  use <module>
-        Loads a standard library module into the environment.
-        Full stdlib comes in Phase 5 — for now we acknowledge it.
-        """
         module_name = node.module
-        stdlib = self._load_stdlib(module_name)
-        if stdlib:
+        from stdlib import load_module
+        try:
+            stdlib = load_module(module_name)
             for name, func in stdlib.items():
                 self.env.set(name, func)
-        else:
-            raise RuntimeError(
-                f"Module '{module_name}' was not found.\n"
-                f"  Available modules will grow in Phase 5."
-            )
+        except ImportError as e:
+            raise AIONImportError(str(e))
 
     def _exec_CallExpression(self, node: CallExpression):
         """
@@ -263,7 +269,7 @@ class Interpreter:
         try:
             return self.env.get(node.name)
         except NameError as e:
-            raise RuntimeError(str(e))
+            raise AIONNameError(str(e))
 
     # ----------------------------------------------------------
     # Helpers

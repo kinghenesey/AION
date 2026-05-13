@@ -1,0 +1,4 @@
+# Error Test 3 — Division by zero
+x = 10
+y = 0
+show x / y
