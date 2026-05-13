@@ -22,31 +22,48 @@ HELP_TEXT = f"""
 {Color.CYAN}{Color.BOLD}AION Programming Language{Color.RESET} v{AION_VERSION} · {AION_CODENAME}
 
 {Color.BOLD}Usage:{Color.RESET}
-  python main.py <file.aion>            Run an AION source file
-  python main.py <file.aion> --debug    Run with debug output
-  python main.py --version              Show version info
-  python main.py --help                 Show this help message
+  python main.py <file.aion>              Run an AION source file
+  python main.py <file.aion> --debug      Run with debug output
+  python main.py --version                Show version info
+  python main.py --help                   Show this help message
+  python main.py --install <package>      Install a package
+  python main.py --uninstall <package>    Uninstall a package
+  python main.py --packages               List all packages
 
 {Color.BOLD}Examples:{Color.RESET}
   python main.py examples/hello.aion
   python main.py examples/hello.aion --debug
+  python main.py --install charts
+  python main.py --packages
 """
 
 
 def parse_args(argv: list) -> dict:
     args = {
-        "file":    None,
-        "debug":   False,
-        "version": False,
-        "help":    False,
+        "file":      None,
+        "debug":     False,
+        "version":   False,
+        "help":      False,
+        "packages":  False,
+        "install":   None,
+        "uninstall": None,
     }
 
     flags  = {a for a in argv if a.startswith("--")}
     values = [a for a in argv if not a.startswith("--")]
 
-    args["debug"]   = "--debug"   in flags
-    args["version"] = "--version" in flags
-    args["help"]    = "--help"    in flags
+    args["debug"]    = "--debug"    in flags
+    args["version"]  = "--version"  in flags
+    args["help"]     = "--help"     in flags
+    args["packages"] = "--packages" in flags
+
+    # Handle --install <name> and --uninstall <name>
+    argv_list = list(argv)
+    for i, arg in enumerate(argv_list):
+        if arg == "--install" and i + 1 < len(argv_list):
+            args["install"] = argv_list[i + 1]
+        if arg == "--uninstall" and i + 1 < len(argv_list):
+            args["uninstall"] = argv_list[i + 1]
 
     if values:
         args["file"] = values[0]
@@ -56,28 +73,51 @@ def parse_args(argv: list) -> dict:
 
 def main():
     argv = sys.argv[1:]
-
-    if not argv:
-        print_banner()
-        print(HELP_TEXT)
-        sys.exit(0)
-
     args = parse_args(argv)
-
-    if args["version"]:
-        print(f"AION v{AION_VERSION} · {AION_CODENAME}")
-        sys.exit(0)
 
     if args["help"]:
         print_banner()
         print(HELP_TEXT)
         sys.exit(0)
 
+    if args["packages"]:
+        print_banner()
+        from cli.package_manager import list_packages
+        list_packages()
+        sys.exit(0)
+
+    if args["install"]:
+        print_banner()
+        from cli.package_manager import install_package
+        success = install_package(args["install"])
+        sys.exit(0 if success else 1)
+
+    if args["uninstall"]:
+        print_banner()
+        from cli.package_manager import uninstall_package
+        success = uninstall_package(args["uninstall"])
+        sys.exit(0 if success else 1)
+
     if not args["file"]:
         print_error("No file specified. Run 'python main.py --help' for usage.")
         sys.exit(1)
+    
+    if args["version"]:
+        print_banner()
+        sys.exit(0)
+    
+    if args["debug"]:
+        print_banner()
 
-    print_banner()
+    if args["debug"]:
+        print_info(f"Debug mode enabled. Running '{args['file']}' ...")
+
+    if not args["debug"]:
+        print_banner()
+    
+    if not args["debug"]:
+        print_info(f"Running '{args['file']}' ...")
+
 
     runner = AIONRunner(filepath=args["file"], debug=args["debug"])
     exit_code = runner.run()

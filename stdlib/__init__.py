@@ -34,17 +34,70 @@ MODULES = {
 def load_module(name: str) -> dict:
     """
     Load a stdlib module by name.
-    Returns a dict of function_name → callable.
-    Raises ImportError if module doesn't exist.
+    Checks built-in modules first, then installed packages.
+    Raises ImportError if module doesn't exist anywhere.
     """
-    if name not in MODULES:
-        available = ", ".join(MODULES.keys())
-        raise ImportError(
-            f"Module '{name}' was not found.\n"
-            f"  Available modules: {available}"
-        )
+    # Check built-in modules first
+    if name in MODULES:
+        return MODULES[name].load()
 
-    return MODULES[name].load()
+    # Check installed packages
+    package_functions = _load_package(name)
+    if package_functions is not None:
+        return package_functions
+
+    # Nothing found — give helpful error
+    available = ", ".join(MODULES.keys())
+    raise ImportError(
+        f"Module '{name}' was not found.\n"
+        f"  Built-in modules: {available}\n"
+        f"  Install packages with: python main.py --install <name>"
+    )
+
+
+def _load_package(name: str) -> dict:
+    """
+    Try to load an installed package by name.
+    Returns None if package is not installed.
+    """
+    import sys
+    import importlib
+    import importlib.util
+    from packages import is_installed, PACKAGES_DIR
+
+    if not is_installed(name):
+        return None
+
+    try:
+        # Build the full path to the package file
+        import os
+        package_file = os.path.join(PACKAGES_DIR, f"{name}.py")
+
+        # Load the module directly from its file path
+        # This avoids any naming conflicts with Python builtins
+        spec   = importlib.util.spec_from_file_location(
+                     f"aion_pkg_{name}", package_file)
+        module = importlib.util.module_from_spec(spec)
+
+        # Temporarily remove packages dir from sys.path
+        # so the module can import Python builtins cleanly
+        clean_path = [p for p in sys.path
+                      if p != PACKAGES_DIR]
+        original_path = sys.path[:]
+        sys.path = clean_path
+
+        try:
+            spec.loader.exec_module(module)
+        finally:
+            sys.path = original_path
+
+        return module.load()
+
+    except Exception as e:
+        raise ImportError(
+            f"Package '{name}' is installed but failed to load.\n"
+            f"  Error: {e}"
+        )
 
 
 def available_modules() -> list:

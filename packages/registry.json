@@ -1,0 +1,8 @@
+{
+  "charts": {
+    "name": "charts",
+    "version": "1.0.0",
+    "description": "Simple ASCII charts and graphs",
+    "installed": true
+  }
+}
