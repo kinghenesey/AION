@@ -16,7 +16,9 @@ from stdlib import (
     datetime_module,
     collections_module,
 )
+
 from ai import ai_module
+from ui import ui_module
 
 
 # ── Module registry ───────────────────────────────────────────
@@ -28,6 +30,7 @@ MODULES = {
     "datetime":    datetime_module,
     "collections": collections_module,
     "ai":          ai_module,
+    "ui":          ui_module,
 }
 
 
