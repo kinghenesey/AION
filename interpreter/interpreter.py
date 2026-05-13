@@ -349,17 +349,10 @@ class Interpreter:
     def _load_stdlib(self, name: str) -> dict:
         """
         Load a standard library module.
-        Full implementation comes in Phase 5.
-        Returns a dict of name → callable.
+        Delegates to the stdlib package registry.
         """
-        # Basic math module preview
-        if name == "math":
-            import math
-            return {
-                "sqrt":  math.sqrt,
-                "floor": math.floor,
-                "ceil":  math.ceil,
-                "abs":   abs,
-                "round": round,
-            }
-        return None
+        from stdlib import load_module
+        try:
+            return load_module(name)
+        except ImportError:
+            return None
