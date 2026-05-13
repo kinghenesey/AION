@@ -16,11 +16,10 @@ from stdlib import (
     datetime_module,
     collections_module,
 )
+from ai import ai_module
 
 
 # ── Module registry ───────────────────────────────────────────
-# Maps module names used in AION code to their loader.
-# Example:  use math  →  loads math_module.load()
 
 MODULES = {
     "math":        math_module,
@@ -28,6 +27,7 @@ MODULES = {
     "files":       files_module,
     "datetime":    datetime_module,
     "collections": collections_module,
+    "ai":          ai_module,
 }
 
 
