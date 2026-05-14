@@ -33,6 +33,7 @@ v{AION_VERSION} · {AION_CODENAME}
 {Color.BOLD}Running files:{Color.RESET}
   python main.py <file.aion>              Run an AION file
   python main.py <file.aion> --debug      Run with debug output
+  python main.py <file.aion> --compile    Run using the compiler
   python main.py run <file.aion>          Run an AION file
 
 {Color.BOLD}Developer tools:{Color.RESET}
@@ -41,6 +42,12 @@ v{AION_VERSION} · {AION_CODENAME}
   python main.py new <project-name>       Create a new project
   python main.py info                     Show system info
   python main.py clean                    Remove cache files
+
+{Color.BOLD}Deployment:{Color.RESET}
+  python main.py export <file.aion>       Export to HTML/script
+  python main.py package <dir>            Package a project
+  python main.py publish <pkg.aionpkg>    Publish to registry
+  python main.py deploy <file.aion>       Full deploy pipeline
 
 {Color.BOLD}Package manager:{Color.RESET}
   python main.py --packages               List all packages
@@ -53,6 +60,7 @@ v{AION_VERSION} · {AION_CODENAME}
 
 {Color.BOLD}Examples:{Color.RESET}
   python main.py examples/hello.aion
+  python main.py deploy examples/ui_demo.aion
   python main.py --install charts
   python main.py new myapp
   python main.py test
@@ -93,7 +101,9 @@ def parse_args(argv: list) -> dict:
             args["uninstall"] = argv_list[i + 1]
 
     # Handle subcommands: run, test, build, new, info, clean
-    commands = {"run", "test", "build", "new", "info", "clean"}
+    commands = {"run", "test", "build", "new",
+                    "info", "clean", "export",
+                    "package", "publish", "deploy"}
     if values and values[0] in commands:
         args["command"] = values[0]
         if len(values) > 1:
@@ -183,10 +193,29 @@ def main():
                 )
                 sys.exit(1)
             runner    = AIONRunner(filepath=arg,
-                                   debug=args["debug"],
-                                   compile_mode=args["compile"])
+                                   debug=args["debug"])
             exit_code = runner.run()
             sys.exit(exit_code)
+
+        if cmd == "export":
+            from cli.deploy import cmd_export
+            success = cmd_export(arg)
+            sys.exit(0 if success else 1)
+
+        if cmd == "package":
+            from cli.deploy import cmd_package
+            success = cmd_package(arg or ".")
+            sys.exit(0 if success else 1)
+
+        if cmd == "publish":
+            from cli.deploy import cmd_publish
+            success = cmd_publish(arg)
+            sys.exit(0 if success else 1)
+
+        if cmd == "deploy":
+            from cli.deploy import cmd_deploy
+            success = cmd_deploy(arg)
+            sys.exit(0 if success else 1)
 
     # ── Direct file execution ─────────────────────────────────
 
