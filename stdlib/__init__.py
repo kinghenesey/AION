@@ -20,6 +20,7 @@ from stdlib import (
 from ai import ai_module
 from ui import ui_module
 from web import web_module
+from database import db_module
 
 
 # ── Module registry ───────────────────────────────────────────
@@ -33,6 +34,7 @@ MODULES = {
     "ai":          ai_module,
     "ui":          ui_module,
     "web":         web_module,
+    "database":    db_module,
 }
 
 
