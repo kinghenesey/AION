@@ -18,6 +18,7 @@ from stdlib import (
 )
 
 from ai import ai_module
+from ai import agents_module
 from ui import ui_module
 from web import web_module
 from database import db_module
@@ -32,6 +33,7 @@ MODULES = {
     "datetime":    datetime_module,
     "collections": collections_module,
     "ai":          ai_module,
+    "agents":      agents_module,
     "ui":          ui_module,
     "web":         web_module,
     "database":    db_module,
