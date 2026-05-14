@@ -1,26 +1,18 @@
 # =============================================================
 # AION AI Runtime — Provider Registry
 # =============================================================
-# This is the central registry for all AI providers.
-# It decides which provider to use based on availability.
-#
 # Priority order:
-#   1. Claude (if ANTHROPIC_API_KEY is set)
-#   2. Mock   (always available as fallback)
-#
-# To add a new provider in the future:
-#   1. Create the provider file in ai/providers/
-#   2. Import it here
-#   3. Add it to the PROVIDERS list
+#   1. Gemini  (if GEMINI_API_KEY is set)
+#   2. Claude  (if ANTHROPIC_API_KEY is set)
+#   3. Mock    (always available as fallback)
 
-from ai.providers.mock       import MockProvider
-from ai.providers.anthropic  import AnthropicProvider
+from ai.providers.mock      import MockProvider
+from ai.providers.anthropic import AnthropicProvider
+from ai.providers.gemini    import GeminiProvider
 
-
-# ── Provider registry ─────────────────────────────────────────
-# Ordered by preference — first available one wins
 
 PROVIDERS = [
+    GeminiProvider,
     AnthropicProvider,
     MockProvider,
 ]
@@ -29,26 +21,23 @@ PROVIDERS = [
 def get_provider():
     """
     Return the best available AI provider.
-    Automatically picks Claude if API key exists,
-    otherwise falls back to Mock.
+    Automatically picks Gemini if key exists,
+    then Claude, then Mock.
     """
     for ProviderClass in PROVIDERS:
         provider = ProviderClass()
         if provider.is_available:
             return provider
 
-    # Should never reach here since Mock is always available
     return MockProvider()
 
 
 def get_provider_by_name(name: str):
-    """
-    Get a specific provider by name.
-    Useful for testing or forcing a specific provider.
-    """
+    """Get a specific provider by name."""
     providers = {
         "mock":   MockProvider,
         "claude": AnthropicProvider,
+        "gemini": GeminiProvider,
     }
 
     if name not in providers:

@@ -18,6 +18,19 @@
 
 import sys
 import os
+# Load environment variables from .env file
+def _load_env():
+    env_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    os.environ[key.strip()] = value.strip()
+
+_load_env()
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
