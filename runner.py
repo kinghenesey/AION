@@ -26,9 +26,10 @@ class AIONRunner:
     file I/O and delegates to the pipeline.
     """
 
-    def __init__(self, filepath: str, debug: bool = False):
+    def __init__(self, filepath: str, debug: bool = False, compile_mode: bool = False):
         self.filepath = filepath
         self.debug    = debug
+        self.compile_mode = compile_mode
         self.source   = ""
 
     def run(self):
@@ -119,9 +120,24 @@ class AIONRunner:
                     print(f"  {Color.MAGENTA}{stmt}{Color.RESET}")
                 print()
 
-            # Phase 4 — Interpreter
-            interpreter = Interpreter()
-            interpreter.execute(program)
+           # Phase 4 — Interpreter (default)
+            # Phase 13 — Compiler (when --compile flag used)
+            if self.compile_mode:
+                from compiler import Compiler, VirtualMachine
+                from compiler import CompileError
+                compiler = Compiler()
+                code     = compiler.compile(program)
+
+                if self.debug:
+                    print_info("Bytecode:")
+                    print(code.disassemble())
+                    print()
+
+                vm = VirtualMachine()
+                vm.run(code)
+            else:
+                interpreter = Interpreter()
+                interpreter.execute(program)
 
         except LexerError as e:
             display_error(

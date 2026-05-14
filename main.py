@@ -65,6 +65,7 @@ def parse_args(argv: list) -> dict:
         "command":   None,
         "arg":       None,
         "debug":     False,
+        "compile":   False,
         "version":   False,
         "help":      False,
         "packages":  False,
@@ -82,7 +83,7 @@ def parse_args(argv: list) -> dict:
     args["version"]  = "--version"  in flags
     args["help"]     = "--help"     in flags
     args["packages"] = "--packages" in flags
-
+    args["compile"]  = "--compile"  in flags
     # Handle --install and --uninstall
     argv_list = list(argv)
     for i, arg in enumerate(argv_list):
@@ -182,7 +183,8 @@ def main():
                 )
                 sys.exit(1)
             runner    = AIONRunner(filepath=arg,
-                                   debug=args["debug"])
+                                   debug=args["debug"],
+                                   compile_mode=args["compile"])
             exit_code = runner.run()
             sys.exit(exit_code)
 
@@ -191,7 +193,8 @@ def main():
     if args["file"]:
         print_banner()
         runner    = AIONRunner(filepath=args["file"],
-                               debug=args["debug"])
+                               debug=args["debug"],
+                               compile_mode=args["compile"])
         exit_code = runner.run()
         sys.exit(exit_code)
 
