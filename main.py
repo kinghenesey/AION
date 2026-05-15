@@ -63,6 +63,13 @@ v{AION_VERSION} · {AION_CODENAME}
   python main.py publish <pkg.aionpkg>    Publish to registry
   python main.py deploy <file.aion>       Full deploy pipeline
 
+{Color.BOLD}Marketplace:{Color.RESET}
+  python main.py marketplace              Browse all packages
+  python main.py marketplace search <q>  Search packages
+  python main.py marketplace install <n> Install a package
+  python main.py marketplace info <name> Package details
+  python main.py marketplace featured    Top packages
+
 {Color.BOLD}Package manager:{Color.RESET}
   python main.py --packages               List all packages
   python main.py --install <package>      Install a package
@@ -118,7 +125,7 @@ def parse_args(argv: list) -> dict:
     commands = {"run", "test", "build", "new",
                     "info", "clean", "export",
                     "package", "publish", "deploy",
-                    "repl"}
+                    "repl", "marketplace"}
     if values and values[0] in commands:
         args["command"] = values[0]
         if len(values) > 1:
@@ -224,6 +231,16 @@ def main():
             repl = REPL()
             repl.start()
             sys.exit(0)
+        
+        if cmd == "marketplace":
+            from cli.marketplace_cmd import cmd_marketplace
+            # arg could be subcommand, values[1] could be the query
+            values = [a for a in argv
+                      if not a.startswith("--")]
+            subcommand = values[1] if len(values) > 1 else ""
+            mp_arg     = values[2] if len(values) > 2 else ""
+            success = cmd_marketplace(subcommand, mp_arg)
+            sys.exit(0 if success else 1)
 
         if cmd == "export":
             from cli.deploy import cmd_export
