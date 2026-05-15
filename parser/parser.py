@@ -17,8 +17,8 @@ from parser.nodes import (
     Program, IntegerLiteral, FloatLiteral, StringLiteral,
     BooleanLiteral, NullLiteral, Identifier, BinaryOp,
     UnaryOp, AssignStatement, ShowStatement, IfStatement,
-    RepeatStatement, TaskStatement, ReturnStatement,
-    UseStatement, CallExpression
+    RepeatStatement, WhileStatement, TaskStatement,
+    ReturnStatement, UseStatement, CallExpression
 )
 
 
@@ -77,6 +77,9 @@ class Parser:
 
         if token.type == TokenType.REPEAT:
             return self._parse_repeat()
+
+        if token.type == TokenType.WHILE:
+            return self._parse_while()
 
         if token.type == TokenType.TASK:
             return self._parse_task()
@@ -150,6 +153,20 @@ class Parser:
         self._skip_newlines()
         body = self._parse_block()
         return RepeatStatement(count, body)
+    
+    def _parse_while(self):
+        """
+        Parse:
+            while <condition>:
+                <body>
+        """
+        self._consume(TokenType.WHILE)
+        condition = self._parse_expression()
+        self._consume(TokenType.COLON)
+        self._expect_newline_or_eof()
+        self._skip_newlines()
+        body = self._parse_block()
+        return WhileStatement(condition, body)
 
     def _parse_task(self):
         """

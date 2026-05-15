@@ -16,8 +16,8 @@ from parser.nodes import (
     Program, IntegerLiteral, FloatLiteral, StringLiteral,
     BooleanLiteral, NullLiteral, Identifier, BinaryOp,
     UnaryOp, AssignStatement, ShowStatement, IfStatement,
-    RepeatStatement, TaskStatement, ReturnStatement,
-    UseStatement, CallExpression
+    RepeatStatement, WhileStatement, TaskStatement,
+    ReturnStatement, UseStatement, CallExpression
 )
 from interpreter.environment import Environment
 from runtime import ReturnSignal
@@ -140,6 +140,26 @@ class Interpreter:
 
         for _ in range(int(count)):
             self._execute_block(node.body)
+    
+    def _exec_WhileStatement(self, node: WhileStatement):
+        """
+        Execute:
+            while <condition>:
+                <body>
+        """
+        max_iterations = 10000
+        count = 0
+
+        while self._is_truthy(
+                self._execute_node(node.condition)):
+            # No new scope — variables update in current scope
+            self._execute_block(node.body, new_scope=False)
+            count += 1
+            if count >= max_iterations:
+                raise RuntimeError(
+                    "While loop ran too many times.\n"
+                    "  Check your loop condition."
+                )
 
     def _exec_TaskStatement(self, node: TaskStatement):
         """
@@ -256,7 +276,23 @@ class Interpreter:
         return node.value
 
     def _exec_StringLiteral(self, node: StringLiteral):
-        return node.value
+        """
+        Execute a string literal.
+        Supports interpolation: "Hello {name}!"
+        """
+        import re
+        value = node.value
+
+        # Find all {variable} patterns
+        def replace_var(match):
+            var_name = match.group(1).strip()
+            try:
+                val = self.env.get(var_name)
+                return self._to_string(val)
+            except Exception:
+                return match.group(0)
+
+        return re.sub(r'\{(\w+)\}', replace_var, value)
 
     def _exec_BooleanLiteral(self, node: BooleanLiteral):
         return node.value
@@ -275,19 +311,22 @@ class Interpreter:
     # Helpers
     # ----------------------------------------------------------
 
-    def _execute_block(self, statements: list):
+    def _execute_block(self, statements: list,
+                       new_scope: bool = True):
         """
-        Execute a list of statements in a new child scope.
-        Variables created here won't leak into the parent scope.
+        Execute a list of statements.
+        new_scope=False keeps variables in the current scope.
+        Used by while loops so counter updates propagate.
         """
-        previous = self.env
-        self.env = Environment(parent=previous)
+        if new_scope:
+            previous = self.env
+            self.env = Environment(parent=previous)
         try:
             for stmt in statements:
                 self._execute_node(stmt)
         finally:
-            # Always restore previous scope even if error occurs
-            self.env = previous
+            if new_scope:
+                self.env = previous
 
     def _call_task(self, task: TaskStatement, args: list):
         """
@@ -346,11 +385,15 @@ class Interpreter:
 
     def _register_builtins(self):
         """Register built-in functions available in all AION programs."""
-        self.globals.set("type_of", lambda x: type(x).__name__)
+        self.globals.set("type_of",   lambda x: type(x).__name__)
         self.globals.set("to_number", lambda x: float(x)
                          if "." in str(x) else int(x))
         self.globals.set("to_text",   lambda x: str(x))
         self.globals.set("length",    lambda x: len(x))
+        self.globals.set("ask",       lambda prompt="": input(str(prompt)))
+        self.globals.set("clear",     lambda: print("\033[H\033[J", end=""))
+        self.globals.set("sleep",     lambda s=1: __import__("time").sleep(float(s)))
+        self.globals.set("random_num",lambda a, b: __import__("random").randint(int(a), int(b)))
 
     def _load_stdlib(self, name: str) -> dict:
         """

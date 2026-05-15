@@ -225,6 +225,20 @@ class UseStatement(Node):
     def __repr__(self):
         return f"Use({self.module})"
 
+class WhileStatement(Node):
+    """
+    Loops while a condition is true.
+    Example:
+        while count < 5:
+            show count
+            count = count + 1
+    """
+    def __init__(self, condition: Node, body: list):
+        self.condition = condition
+        self.body      = body
+
+    def __repr__(self):
+        return f"While({self.condition})"
 
 class CallExpression(Node):
     """

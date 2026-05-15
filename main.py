@@ -48,6 +48,7 @@ v{AION_VERSION} · {AION_CODENAME}
   python main.py <file.aion> --debug      Run with debug output
   python main.py <file.aion> --compile    Run using the compiler
   python main.py run <file.aion>          Run an AION file
+  python main.py repl                     Start interactive shell
 
 {Color.BOLD}Developer tools:{Color.RESET}
   python main.py test                     Run all test suites
@@ -116,7 +117,8 @@ def parse_args(argv: list) -> dict:
     # Handle subcommands: run, test, build, new, info, clean
     commands = {"run", "test", "build", "new",
                     "info", "clean", "export",
-                    "package", "publish", "deploy"}
+                    "package", "publish", "deploy",
+                    "repl"}
     if values and values[0] in commands:
         args["command"] = values[0]
         if len(values) > 1:
@@ -138,6 +140,13 @@ def main():
     args = parse_args(argv)
 
     # ── Flag commands ─────────────────────────────────────────
+
+    if "--repl" in argv:
+        print_banner()
+        from repl import REPL
+        repl = REPL()
+        repl.start()
+        sys.exit(0)
 
     if args["version"]:
         print(f"AION v{AION_VERSION} · {AION_CODENAME}")
@@ -209,6 +218,12 @@ def main():
                                    debug=args["debug"])
             exit_code = runner.run()
             sys.exit(exit_code)
+        
+        if cmd == "repl":
+            from repl import REPL
+            repl = REPL()
+            repl.start()
+            sys.exit(0)
 
         if cmd == "export":
             from cli.deploy import cmd_export
