@@ -56,6 +56,8 @@ v{AION_VERSION} · {AION_CODENAME}
   python main.py new <project-name>       Create a new project
   python main.py info                     Show system info
   python main.py clean                    Remove cache files
+  python main.py debug <file.aion>        Visual debugger
+  python main.py repl                     Interactive shell
 
 {Color.BOLD}Deployment:{Color.RESET}
   python main.py export <file.aion>       Export to HTML/script
@@ -125,7 +127,7 @@ def parse_args(argv: list) -> dict:
     commands = {"run", "test", "build", "new",
                     "info", "clean", "export",
                     "package", "publish", "deploy",
-                    "repl", "marketplace"}
+                    "repl", "marketplace", "debug"}
     if values and values[0] in commands:
         args["command"] = values[0]
         if len(values) > 1:
@@ -230,6 +232,18 @@ def main():
             from repl import REPL
             repl = REPL()
             repl.start()
+            sys.exit(0)
+        
+        if cmd == "debug":
+            if not arg:
+                print_error(
+                    "Please provide a file to debug.\n"
+                    "  Usage: python main.py debug app.aion"
+                )
+                sys.exit(1)
+            from debugger import Debugger
+            debugger = Debugger(filepath=arg)
+            debugger.start()
             sys.exit(0)
         
         if cmd == "marketplace":
