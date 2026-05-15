@@ -120,7 +120,7 @@ class AIONRunner:
                     print(f"  {Color.MAGENTA}{stmt}{Color.RESET}")
                 print()
 
-           # Phase 4 — Interpreter (default)
+            # Phase 4 — Interpreter (default)
             # Phase 13 — Compiler (when --compile flag used)
             if self.compile_mode:
                 from compiler import Compiler, VirtualMachine
@@ -137,7 +137,10 @@ class AIONRunner:
                 vm.run(code)
             else:
                 interpreter = Interpreter()
-                interpreter.execute(program)
+                interpreter.execute(
+                    program,
+                    filepath=os.path.abspath(self.filepath)
+                )
 
         except LexerError as e:
             display_error(

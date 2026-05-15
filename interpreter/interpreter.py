@@ -17,7 +17,8 @@ from parser.nodes import (
     BooleanLiteral, NullLiteral, Identifier, BinaryOp,
     UnaryOp, AssignStatement, ShowStatement, IfStatement,
     RepeatStatement, WhileStatement, TaskStatement,
-    ReturnStatement, UseStatement, CallExpression
+    ReturnStatement, UseStatement, ImportStatement,
+    CallExpression
 )
 from interpreter.environment import Environment
 from runtime import ReturnSignal
@@ -64,8 +65,13 @@ class Interpreter:
     # Public interface
     # ----------------------------------------------------------
 
-    def execute(self, program: Program):
+    def execute(self, program: Program,
+                filepath: str = None):
         """Execute a full AION program."""
+        if filepath:
+            self._current_file  = filepath
+        if not hasattr(self, '_imported_files'):
+            self._imported_files = set()
         for statement in program.statements:
             self._execute_node(statement)
 
@@ -188,6 +194,76 @@ class Interpreter:
                 self.env.set(name, func)
         except ImportError as e:
             raise AIONImportError(str(e))
+    
+    def _exec_ImportStatement(self,
+                               node: ImportStatement):
+        """
+        Execute:  import "filepath.aion"
+        Loads and executes another .aion file,
+        making all its tasks and variables available
+        in the current scope.
+        """
+        import os
+
+        filepath = node.filepath
+
+        # Resolve relative to the current file if possible
+        if (not os.path.isabs(filepath) and
+                hasattr(self, '_current_file') and
+                self._current_file):
+            base_dir = os.path.dirname(
+                self._current_file)
+            filepath = os.path.join(base_dir, filepath)
+
+        # Check file exists
+        if not os.path.isfile(filepath):
+            raise RuntimeError(
+                f"Cannot import '{node.filepath}'.\n"
+                f"  File not found: '{filepath}'"
+            )
+
+        # Prevent circular imports
+        if not hasattr(self, '_imported_files'):
+            self._imported_files = set()
+
+        abs_path = os.path.abspath(filepath)
+        if abs_path in self._imported_files:
+            return  # Already imported — skip
+
+        self._imported_files.add(abs_path)
+
+        # Load and execute the file
+        try:
+            with open(filepath, "r",
+                      encoding="utf-8") as f:
+                source = f.read()
+
+            from lexer import Lexer
+            from parser.parser import Parser
+
+            tokens  = Lexer(source).tokenize()
+            program = Parser(tokens).parse()
+
+            # Execute in current scope so tasks/vars
+            # are available to the importing file
+            prev_file = getattr(
+                self, '_current_file', None)
+            self._current_file = abs_path
+
+            for stmt in program.statements:
+                self._execute_node(stmt)
+
+            self._current_file = prev_file
+
+            from config import Color
+            print(f"{Color.DIM}→ imported "
+                  f"'{node.filepath}'{Color.RESET}")
+
+        except Exception as e:
+            raise RuntimeError(
+                f"Error importing '{node.filepath}':\n"
+                f"  {e}"
+            )
 
     def _exec_CallExpression(self, node: CallExpression):
         """

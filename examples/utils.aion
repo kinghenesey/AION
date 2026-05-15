@@ -1,0 +1,14 @@
+# utils.aion — Utility functions
+
+task calculate(a, b):
+    result = a + b
+    return result
+
+task multiply(a, b):
+    result = a * b
+    return result
+
+task is_adult(age):
+    if age >= 18:
+        return true
+    return false

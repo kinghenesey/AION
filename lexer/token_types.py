@@ -32,6 +32,7 @@ class TokenType(Enum):
     TASK        = auto()   # task (functions)
     RETURN      = auto()   # return
     USE         = auto()   # use (imports)
+    IMPORT      = auto()   # import (alias for use)
     AND         = auto()   # and
     OR          = auto()   # or
     NOT         = auto()   # not
@@ -83,6 +84,7 @@ KEYWORDS = {
     "task":   TokenType.TASK,
     "return": TokenType.RETURN,
     "use":    TokenType.USE,
+    "import": TokenType.IMPORT,
     "and":    TokenType.AND,
     "or":     TokenType.OR,
     "not":    TokenType.NOT,

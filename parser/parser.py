@@ -18,7 +18,8 @@ from parser.nodes import (
     BooleanLiteral, NullLiteral, Identifier, BinaryOp,
     UnaryOp, AssignStatement, ShowStatement, IfStatement,
     RepeatStatement, WhileStatement, TaskStatement,
-    ReturnStatement, UseStatement, CallExpression
+    ReturnStatement, UseStatement, ImportStatement,
+    CallExpression
 )
 
 
@@ -89,6 +90,9 @@ class Parser:
 
         if token.type == TokenType.USE:
             return self._parse_use()
+
+        if token.type == TokenType.IMPORT:
+            return self._parse_import()
 
         if token.type == TokenType.IDENTIFIER:
             return self._parse_identifier_statement()
@@ -205,6 +209,13 @@ class Parser:
         module = self._consume(TokenType.IDENTIFIER).value
         self._expect_newline_or_eof()
         return UseStatement(module)
+    
+    def _parse_import(self):
+        """Parse:  import "filepath.aion" """
+        self._consume(TokenType.IMPORT)
+        filepath = self._consume(TokenType.STRING).value
+        self._expect_newline_or_eof()
+        return ImportStatement(filepath)
 
     def _parse_identifier_statement(self):
         """

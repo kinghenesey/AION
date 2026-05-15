@@ -1,0 +1,20 @@
+# multi_file_demo.aion
+# Demonstrates importing from other .aion files
+
+import "greetings.aion"
+import "utils.aion"
+
+# Use functions from greetings.aion
+greet("Emmanuel")
+farewell("Emmanuel")
+introduce("Emmanuel", 20)
+
+# Use functions from utils.aion
+sum     = calculate(10, 20)
+product = multiply(5, 6)
+
+show "10 + 20 = {sum}"
+show "5 * 6 = {product}"
+
+adult = is_adult(20)
+show "Is adult: {adult}"

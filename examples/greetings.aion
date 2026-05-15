@@ -1,0 +1,10 @@
+# greetings.aion — Greeting functions
+
+task greet(name):
+    show "Hello {name}! Welcome to AION."
+
+task farewell(name):
+    show "Goodbye {name}! Keep building."
+
+task introduce(name, age):
+    show "My name is {name} and I am {age} years old."

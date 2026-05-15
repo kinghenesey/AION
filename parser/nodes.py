@@ -225,6 +225,19 @@ class UseStatement(Node):
     def __repr__(self):
         return f"Use({self.module})"
 
+class ImportStatement(Node):
+    """
+    Imports another .aion file.
+    Example:
+        import "utils.aion"
+        import "greetings.aion"
+    """
+    def __init__(self, filepath: str):
+        self.filepath = filepath
+
+    def __repr__(self):
+        return f"Import({repr(self.filepath)})"
+
 class WhileStatement(Node):
     """
     Loops while a condition is true.
