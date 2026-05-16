@@ -1,0 +1,15 @@
+ai
+cli
+compiler
+database
+deploy
+interpreter
+lexer
+marketplace
+packages
+parser
+runtime
+stdlib
+ui
+web
+web_ide

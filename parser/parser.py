@@ -15,11 +15,11 @@ from lexer.token_types import TokenType
 from lexer.token import Token
 from parser.nodes import (
     Program, IntegerLiteral, FloatLiteral, StringLiteral,
-    BooleanLiteral, NullLiteral, Identifier, BinaryOp,
-    UnaryOp, AssignStatement, ShowStatement, IfStatement,
-    RepeatStatement, WhileStatement, TaskStatement,
-    ReturnStatement, UseStatement, ImportStatement,
-    CallExpression
+    BooleanLiteral, NullLiteral, ListLiteral, Identifier,
+    BinaryOp, UnaryOp, AssignStatement, ShowStatement,
+    IfStatement, RepeatStatement, WhileStatement,
+    TaskStatement, ReturnStatement, UseStatement,
+    ImportStatement, CallExpression, IndexExpression
 )
 
 
@@ -373,8 +373,21 @@ class Parser:
             self._advance()
             # Check if this is a function call
             if self._current().type == TokenType.LPAREN:
-                return self._finish_call(token.value)
-            return Identifier(token.value)
+                expr = self._finish_call(token.value)
+            else:
+                expr = Identifier(token.value)
+
+            # Check for index access items[0]
+            while self._current().type == TokenType.LBRACKET:
+                self._advance()
+                index = self._parse_expression()
+                self._consume(TokenType.RBRACKET)
+                expr = IndexExpression(expr, index)
+
+            return expr
+        
+        if token.type == TokenType.LBRACKET:
+            return self._parse_list()
 
         if token.type == TokenType.LPAREN:
             self._advance()
@@ -387,6 +400,25 @@ class Parser:
             f"expected a value, variable, or expression.",
             token.line
         )
+    
+    def _parse_list(self):
+        """Parse: [1, 2, 3]"""
+        self._consume(TokenType.LBRACKET)
+        elements = []
+
+        while self._current().type != TokenType.RBRACKET:
+            if self._at_end():
+                raise ParseError(
+                    "List was never closed — "
+                    "did you forget a ']'?",
+                    self._current().line
+                )
+            elements.append(self._parse_expression())
+            if self._current().type == TokenType.COMMA:
+                self._advance()
+
+        self._consume(TokenType.RBRACKET)
+        return ListLiteral(elements)
 
     def _finish_call(self, name: str) -> CallExpression:
         """Parse the argument list of a function call."""

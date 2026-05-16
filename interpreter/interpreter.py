@@ -14,11 +14,11 @@
 
 from parser.nodes import (
     Program, IntegerLiteral, FloatLiteral, StringLiteral,
-    BooleanLiteral, NullLiteral, Identifier, BinaryOp,
-    UnaryOp, AssignStatement, ShowStatement, IfStatement,
-    RepeatStatement, WhileStatement, TaskStatement,
-    ReturnStatement, UseStatement, ImportStatement,
-    CallExpression
+    BooleanLiteral, NullLiteral, ListLiteral, Identifier,
+    BinaryOp, UnaryOp, AssignStatement, ShowStatement,
+    IfStatement, RepeatStatement, WhileStatement,
+    TaskStatement, ReturnStatement, UseStatement,
+    ImportStatement, CallExpression, IndexExpression
 )
 from interpreter.environment import Environment
 from runtime import ReturnSignal
@@ -375,6 +375,31 @@ class Interpreter:
 
     def _exec_NullLiteral(self, node: NullLiteral):
         return None
+    
+    def _exec_ListLiteral(self, node: ListLiteral):
+        """Execute a list literal like [1, 2, 3]."""
+        return [self._execute_node(e) for e in node.elements]
+    
+    def _exec_IndexExpression(self,
+                               node: IndexExpression):
+        """Execute list indexing like items[0]."""
+        collection = self._execute_node(node.collection)
+        index      = self._execute_node(node.index)
+
+        try:
+            return collection[int(index)]
+        except IndexError:
+            raise RuntimeError(
+                f"Index {index} is out of range.\n"
+                f"  List has {len(collection)} items "
+                f"(indexes 0 to {len(collection)-1})."
+            )
+        except TypeError:
+            raise RuntimeError(
+                f"Cannot index into "
+                f"'{type(collection).__name__}'.\n"
+                f"  Only lists can be indexed."
+            )
 
     def _exec_Identifier(self, node: Identifier):
         """Look up a variable's value in the current scope."""
@@ -457,6 +482,9 @@ class Interpreter:
         if value is None:        return "null"
         if value is True:        return "true"
         if value is False:       return "false"
+        if isinstance(value, list):
+            items = [self._to_string(i) for i in value]
+            return "[" + ", ".join(items) + "]"
         return str(value)
 
     def _register_builtins(self):

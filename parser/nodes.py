@@ -70,6 +70,34 @@ class NullLiteral(Node):
     def __repr__(self):
         return "Null"
 
+class ListLiteral(Node):
+    """
+    A list of values.
+    Example:
+        items = [1, 2, 3]
+        names = ["Emmanuel", "Alice", "Bob"]
+        mixed = [1, "hello", true]
+    """
+    def __init__(self, elements: list):
+        self.elements = elements
+
+    def __repr__(self):
+        return f"List({self.elements})"
+
+class IndexExpression(Node):
+    """
+    Access a list element by index.
+    Example:
+        items[0]
+        names[1]
+    """
+    def __init__(self, collection: Node, index: Node):
+        self.collection = collection
+        self.index      = index
+
+    def __repr__(self):
+        return f"Index({self.collection}[{self.index}])"
+
 
 # ── Identifier ────────────────────────────────────────────────
 

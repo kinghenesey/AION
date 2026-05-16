@@ -1,0 +1,351 @@
+Metadata-Version: 2.4
+Name: aion-lang
+Version: 1.0.0
+Summary: AION - AI-Native Programming Language
+Home-page: https://github.com/kinghenesey/AION
+Author: Emmanuel King Christopher
+Author-email: emmanuelkingchristopher@gmail.com
+Project-URL: Bug Tracker, https://github.com/kinghenesey/AION/issues
+Project-URL: Documentation, https://github.com/kinghenesey/AION#readme
+Keywords: programming language,ai,interpreter,compiler
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Software Development :: Interpreters
+Classifier: Topic :: Software Development :: Compilers
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+
+<div align="center">
+
+# AION Programming Language
+
+### AI-Native Programming Language built with Python
+
+![Version](https://img.shields.io/badge/version-1.0.0-00d4ff)
+![Python](https://img.shields.io/badge/python-3.11+-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Tests](https://img.shields.io/badge/tests-147%20passing-success)
+
+*"Giving instructions to an intelligent operating system."*
+
+[Quick Start](#quick-start) · [Features](#features) · [Examples](#examples) · [Docs](#documentation) · [Roadmap](#roadmap)
+
+</div>
+
+---
+
+## What is AION?
+
+AION is an **AI-native programming language** built with Python. It combines the simplicity of Python, the readability of natural language, and native AI capabilities — making it the first programming language where AI is a first-class citizen.
+
+```aion
+use ai
+use database
+
+name = "Emmanuel"
+show "Hello {name}!"
+
+answer = ai_ask("What should I build today?")
+show answer
+
+db_connect("myapp.db")
+db_create("ideas", "title text, created text")
+db_insert("ideas", "My first AION app, 2026-01-01")
+```
+
+---
+
+## Quick Start
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/kinghenesey/AION.git
+cd AION
+```
+
+### 2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Run your first AION program
+
+```bash
+python main.py examples/hello.aion
+```
+
+### 4. Start the interactive shell
+
+```bash
+python main.py repl
+```
+
+### 5. Launch the Web IDE
+
+```bash
+python main.py ide
+# Open http://localhost:3000
+```
+
+---
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| 🧠 **AI Runtime** | Native AI with Google Gemini and Claude |
+| 🌐 **Web Framework** | Build real HTTP servers |
+| 🗄️ **Database** | Full CRUD with SQLite |
+| 🎨 **UI Framework** | Generate real HTML apps |
+| 📦 **Package Manager** | Install and manage packages |
+| 🏪 **Marketplace** | 12+ community packages |
+| 🔄 **REPL** | Interactive shell |
+| 🐛 **Debugger** | Visual step-through debugger |
+| 💻 **Web IDE** | Browser-based code editor |
+| 🤖 **AI Agents** | Autonomous AI agents |
+| 🔁 **Workflows** | AI automation pipelines |
+| 📂 **Multi-file** | Import between .aion files |
+| ⚡ **Compiler** | Bytecode compiler + VM |
+
+---
+
+## Examples
+
+### Variables & Output
+```aion
+name = "Emmanuel"
+age  = 20
+show "Hello {name}! You are {age} years old."
+```
+
+### Conditions & Loops
+```aion
+if age >= 18:
+    show "Adult"
+else:
+    show "Minor"
+
+repeat 5:
+    show "AION!"
+
+count = 0
+while count < 3:
+    show count
+    count = count + 1
+```
+
+### Tasks (Functions)
+```aion
+task greet(name):
+    show "Hello {name}!"
+
+greet("Emmanuel")
+greet("World")
+```
+
+### Standard Library
+```aion
+use math
+use text
+use datetime
+
+show sqrt(144)
+show upper("hello aion")
+show today()
+```
+
+### AI Integration
+```aion
+use ai
+
+answer  = ai_ask("What is the capital of Nigeria?")
+summary = ai_summarize("Long text here...")
+poem    = ai_generate("Write a poem about coding")
+show answer
+```
+
+### Web Server
+```aion
+use web
+
+web_app("My Server")
+web_route("/", "Welcome to AION!")
+web_route("/hello", "Hello World!")
+web_start(8000)
+```
+
+### Database
+```aion
+use database
+
+db_connect("myapp.db")
+db_create("users", "name text, age integer")
+db_insert("users", "Emmanuel, 20")
+results = db_find("users", "all")
+show results
+```
+
+### AI Agents
+```aion
+use agents
+
+agent_create("researcher", "Research topics")
+agent_tool("researcher", "search", "Search the web")
+result = agent_run("researcher", "Tell me about Python")
+show result
+```
+
+### Multi-file Projects
+```aion
+# main.aion
+import "utils.aion"
+import "greetings.aion"
+
+greet("Emmanuel")
+result = calculate(10, 20)
+show result
+```
+
+---
+
+## CLI Commands
+
+```bash
+# Run files
+python main.py app.aion
+python main.py app.aion --debug
+python main.py app.aion --compile
+
+# Developer tools
+python main.py repl              # Interactive shell
+python main.py ide               # Web IDE
+python main.py debug app.aion    # Visual debugger
+python main.py test              # Run all tests
+python main.py build app.aion    # Validate file
+python main.py new myproject     # Create project
+python main.py info              # System info
+
+# Package manager
+python main.py --install charts
+python main.py --uninstall charts
+python main.py --packages
+
+# Marketplace
+python main.py marketplace
+python main.py marketplace search nigeria
+python main.py marketplace install aion-naira
+
+# Deployment
+python main.py export app.aion
+python main.py deploy app.aion
+```
+
+---
+
+## Standard Library
+
+| Module | Functions |
+|--------|-----------|
+| `use math` | sqrt, floor, ceil, abs, pi, pow, sin, cos |
+| `use text` | upper, lower, trim, replace, contains, split |
+| `use files` | read_file, write_file, file_exists, delete_file |
+| `use datetime` | today, now, year, month, day, hour |
+| `use collections` | make_list, list_get, list_join, list_sort |
+| `use ai` | ai_ask, ai_summarize, ai_generate, ai_classify |
+| `use agents` | agent_create, agent_run, workflow_create |
+| `use ui` | ui_app, ui_page, ui_title, ui_button, ui_save |
+| `use web` | web_app, web_route, web_start |
+| `use database` | db_connect, db_create, db_insert, db_find |
+
+---
+
+## Marketplace Packages
+
+```bash
+python main.py marketplace install aion-ui-pro
+python main.py marketplace install aion-charts-pro
+python main.py marketplace install aion-nlp
+python main.py marketplace install aion-orm
+python main.py marketplace install aion-naira
+python main.py marketplace install aion-crypto
+```
+
+---
+
+## Project Structure
+
+aion/
+├── main.py              ← Entry point
+├── runner.py            ← Pipeline orchestrator
+├── config.py            ← Version & constants
+├── repl.py              ← Interactive shell
+├── debugger.py          ← Visual debugger
+├── lexer/               ← Tokenizer
+├── parser/              ← AST builder
+├── interpreter/         ← Execution engine
+├── compiler/            ← Bytecode compiler + VM
+├── stdlib/              ← Standard library
+├── ai/                  ← AI runtime + agents
+├── web/                 ← Web framework
+├── database/            ← Database system
+├── ui/                  ← UI framework
+├── marketplace/         ← Package marketplace
+├── web_ide/             ← Browser-based IDE
+├── deploy/              ← Deployment tools
+├── packages/            ← Installed packages
+├── examples/            ← Example programs
+└── tests/               ← Test suite (147 tests)
+
+---
+
+## Roadmap
+
+- [x] Phase 1  — Foundation
+- [x] Phase 2  — Lexer
+- [x] Phase 3  — Parser
+- [x] Phase 4  — Interpreter
+- [x] Phase 5  — Standard Library
+- [x] Phase 6  — Error System
+- [x] Phase 7  — AI Runtime
+- [x] Phase 8  — Package Manager
+- [x] Phase 9  — Professional CLI
+- [x] Phase 10 — UI Framework
+- [x] Phase 11 — Web Framework
+- [x] Phase 12 — Database System
+- [x] Phase 13 — Compiler
+- [x] Phase 14 — AI Ecosystem
+- [x] Phase 15 — Deployment
+- [x] Phase 16 — Language Improvements
+- [x] Phase 17 — Multi-file Projects
+- [x] Phase 18 — Marketplace
+- [x] Phase 19 — Visual Debugger
+- [x] Phase 20 — Web IDE
+- [x] Phase 21 — Polish & Publish
+
+---
+
+## Built By
+
+**Emmanuel** — Built from scratch with dedication and vision.
+
+> *"I didn't just learn to code. I built the tools other people use to code."*
+
+---
+
+## License
+
+MIT License — free to use, modify, and distribute.
+
+---
+
+<div align="center">
+
+**Star ⭐ this repo if AION inspired you!**
+
+[github.com/kinghenesey/AION](https://github.com/kinghenesey/AION)
+
+</div>
