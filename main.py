@@ -58,6 +58,7 @@ v{AION_VERSION} · {AION_CODENAME}
   python main.py clean                    Remove cache files
   python main.py debug <file.aion>        Visual debugger
   python main.py repl                     Interactive shell
+  python main.py ide                      Launch Web IDE
 
 {Color.BOLD}Deployment:{Color.RESET}
   python main.py export <file.aion>       Export to HTML/script
@@ -127,7 +128,7 @@ def parse_args(argv: list) -> dict:
     commands = {"run", "test", "build", "new",
                     "info", "clean", "export",
                     "package", "publish", "deploy",
-                    "repl", "marketplace", "debug"}
+                    "repl", "marketplace", "debug", "ide"}
     if values and values[0] in commands:
         args["command"] = values[0]
         if len(values) > 1:
@@ -244,6 +245,12 @@ def main():
             from debugger import Debugger
             debugger = Debugger(filepath=arg)
             debugger.start()
+            sys.exit(0)
+        
+        if cmd == "ide":
+            from web_ide.ide_server import start_ide
+            port = int(arg) if arg and arg.isdigit() else 3000
+            start_ide(port=port)
             sys.exit(0)
         
         if cmd == "marketplace":
