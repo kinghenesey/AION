@@ -28,6 +28,7 @@
             position: fixed;
             top: 0; left: 0; right: 0;
             background: #0d0d1aee;
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border);
             padding: 16px 40px;
@@ -351,7 +352,7 @@
         <a href="#examples">Examples</a>
         <a href="#install">Install</a>
         <a href="https://github.com/kinghenesey/AION"
-           target="_blank">GitHub</a>
+           target="_blank" rel="noopener">GitHub</a>
         <a href="http://localhost:3000"
            class="nav-cta">Web IDE</a>
     </div>
@@ -377,11 +378,11 @@
                 Get Started
             </a>
             <a href="https://github.com/kinghenesey/AION"
-               class="btn-secondary" target="_blank">
+               class="btn-secondary" target="_blank" rel="noopener">
                 View on GitHub
             </a>
             <a href="http://localhost:3000"
-               class="btn-secondary" target="_blank">
+               class="btn-secondary" target="_blank" rel="noopener noreferrer">
                 Try Web IDE
             </a>
         </div>
