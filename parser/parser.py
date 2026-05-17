@@ -15,11 +15,12 @@ from lexer.token_types import TokenType
 from lexer.token import Token
 from parser.nodes import (
     Program, IntegerLiteral, FloatLiteral, StringLiteral,
-    BooleanLiteral, NullLiteral, ListLiteral, Identifier,
-    BinaryOp, UnaryOp, AssignStatement, ShowStatement,
-    IfStatement, RepeatStatement, WhileStatement,
-    TaskStatement, ReturnStatement, UseStatement,
-    ImportStatement, CallExpression, IndexExpression
+    BooleanLiteral, NullLiteral, ListLiteral, DictLiteral,
+    Identifier, BinaryOp, UnaryOp, AssignStatement,
+    ShowStatement, IfStatement, RepeatStatement,
+    WhileStatement, TaskStatement, ReturnStatement,
+    UseStatement, ImportStatement, CallExpression,
+    IndexExpression
 )
 
 
@@ -386,6 +387,9 @@ class Parser:
 
             return expr
         
+        if token.type == TokenType.LBRACE:
+            return self._parse_dict()
+        
         if token.type == TokenType.LBRACKET:
             return self._parse_list()
 
@@ -419,6 +423,56 @@ class Parser:
 
         self._consume(TokenType.RBRACKET)
         return ListLiteral(elements)
+    
+    def _parse_dict(self):
+        """Parse: {name: "Emmanuel", age: 20}"""
+        self._consume(TokenType.LBRACE)
+        pairs = []
+
+        # Skip any newlines after opening brace
+        self._skip_newlines()
+
+        while self._current().type != TokenType.RBRACE:
+            if self._at_end():
+                raise ParseError(
+                    "Dictionary was never closed.",
+                    self._current().line
+                )
+
+            # Parse key as string
+            if self._current().type == TokenType.IDENTIFIER:
+                key = StringLiteral(self._advance().value)
+            elif self._current().type == TokenType.STRING:
+                key = StringLiteral(self._advance().value)
+            else:
+                raise ParseError(
+                    "Dictionary key must be a word.",
+                    self._current().line
+                )
+
+            # Consume colon
+            self._consume(TokenType.COLON)
+
+            # Skip INDENT tokens that might appear
+            # after colon due to indentation system
+            while self._current().type in (
+                TokenType.INDENT, TokenType.DEDENT,
+                TokenType.NEWLINE
+            ):
+                self._advance()
+
+            # Parse value
+            value = self._parse_addition()
+            pairs.append((key, value))
+
+            # Skip comma and whitespace
+            if self._current().type == TokenType.COMMA:
+                self._advance()
+
+            self._skip_newlines()
+
+        self._consume(TokenType.RBRACE)
+        return DictLiteral(pairs)
 
     def _finish_call(self, name: str) -> CallExpression:
         """Parse the argument list of a function call."""

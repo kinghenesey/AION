@@ -14,11 +14,12 @@
 
 from parser.nodes import (
     Program, IntegerLiteral, FloatLiteral, StringLiteral,
-    BooleanLiteral, NullLiteral, ListLiteral, Identifier,
-    BinaryOp, UnaryOp, AssignStatement, ShowStatement,
-    IfStatement, RepeatStatement, WhileStatement,
-    TaskStatement, ReturnStatement, UseStatement,
-    ImportStatement, CallExpression, IndexExpression
+    BooleanLiteral, NullLiteral, ListLiteral, DictLiteral,
+    Identifier, BinaryOp, UnaryOp, AssignStatement,
+    ShowStatement, IfStatement, RepeatStatement,
+    WhileStatement, TaskStatement, ReturnStatement,
+    UseStatement, ImportStatement, CallExpression,
+    IndexExpression
 )
 from interpreter.environment import Environment
 from runtime import ReturnSignal
@@ -106,6 +107,13 @@ class Interpreter:
     def _exec_AssignStatement(self, node: AssignStatement):
         """Execute:  name = value"""
         value = self._execute_node(node.value)
+        # Deep copy dicts and lists to prevent mutation
+        if isinstance(value, dict):
+            import copy
+            value = copy.deepcopy(value)
+        elif isinstance(value, list):
+            import copy
+            value = copy.deepcopy(value)
         self.env.set(node.name, value)
         return value
 
@@ -380,25 +388,43 @@ class Interpreter:
         """Execute a list literal like [1, 2, 3]."""
         return [self._execute_node(e) for e in node.elements]
     
+    def _exec_DictLiteral(self, node: DictLiteral):
+        """Execute a dictionary literal."""
+        result = {}
+        for key_node, value_node in node.pairs:
+            key   = self._execute_node(key_node)
+            value = self._execute_node(value_node)
+            result[str(key)] = value
+        # Return a copy to prevent mutation
+        return dict(result)
+    
     def _exec_IndexExpression(self,
                                node: IndexExpression):
-        """Execute list indexing like items[0]."""
+        """Execute list/dict indexing."""
         collection = self._execute_node(node.collection)
         index      = self._execute_node(node.index)
 
         try:
+            if isinstance(collection, dict):
+                key = str(index)
+                if key not in collection:
+                    raise RuntimeError(
+                        f"Key '{key}' not found "
+                        f"in dictionary.\n"
+                        f"  Available keys: "
+                        f"{list(collection.keys())}"
+                    )
+                return collection[key]
             return collection[int(index)]
         except IndexError:
             raise RuntimeError(
                 f"Index {index} is out of range.\n"
-                f"  List has {len(collection)} items "
-                f"(indexes 0 to {len(collection)-1})."
+                f"  List has {len(collection)} items."
             )
         except TypeError:
             raise RuntimeError(
                 f"Cannot index into "
-                f"'{type(collection).__name__}'.\n"
-                f"  Only lists can be indexed."
+                f"'{type(collection).__name__}'."
             )
 
     def _exec_Identifier(self, node: Identifier):
@@ -479,12 +505,24 @@ class Interpreter:
 
     def _to_string(self, value) -> str:
         """Convert any AION value to a printable string."""
-        if value is None:        return "null"
-        if value is True:        return "true"
-        if value is False:       return "false"
+        if value is None:
+            return "null"
+        if value is True:
+            return "true"
+        if value is False:
+            return "false"
+        if isinstance(value, dict):
+            pairs = []
+            for k, v in value.items():
+                pairs.append(f"{k}: {self._to_string(v)}")
+            return "{" + ", ".join(pairs) + "}"
         if isinstance(value, list):
             items = [self._to_string(i) for i in value]
             return "[" + ", ".join(items) + "]"
+        if isinstance(value, str):
+            return value
+        if isinstance(value, (int, float)):
+            return str(value)
         return str(value)
 
     def _register_builtins(self):

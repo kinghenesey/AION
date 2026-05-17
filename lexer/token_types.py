@@ -63,6 +63,8 @@ class TokenType(Enum):
     RPAREN      = auto()   # )
     LBRACKET    = auto()   # [
     RBRACKET    = auto()   # ]
+    LBRACE      = auto()   # {
+    RBRACE      = auto()   # }
 
     # ── Structure ─────────────────────────────────────────────
     NEWLINE     = auto()   # end of line

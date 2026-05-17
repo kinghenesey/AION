@@ -98,6 +98,20 @@ class IndexExpression(Node):
     def __repr__(self):
         return f"Index({self.collection}[{self.index}])"
 
+class DictLiteral(Node):
+    """
+    A dictionary of key-value pairs.
+    Example:
+        person = {name: "Emmanuel", age: 20}
+        config = {debug: true, port: 8000}
+    """
+    def __init__(self, pairs: list):
+        # pairs is a list of (key, value) tuples
+        self.pairs = pairs
+
+    def __repr__(self):
+        return f"Dict({len(self.pairs)} pairs)"
+
 
 # ── Identifier ────────────────────────────────────────────────
 
