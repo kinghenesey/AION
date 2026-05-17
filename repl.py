@@ -60,7 +60,7 @@ class REPL:
     def _read_input(self) -> str:
         """
         Read one line or a complete block from the user.
-        Handles multi-line input (if/repeat/while/task blocks).
+        Handles multi-line input for all block types.
         """
         try:
             line = input(self.PROMPT)
@@ -72,30 +72,67 @@ class REPL:
 
         # Check if line starts a block (ends with :)
         if line.rstrip().endswith(":"):
-            lines = [line]
-            # Keep reading indented lines
+            lines  = [line]
+            indent = 0
+
             while True:
                 try:
                     cont = input(self.PROMPT_CONT)
-                    # Empty line ends the block
+
+                    # Empty line — check if we need
+                    # to keep reading for catch/else
                     if not cont.strip():
+                        # Check if last keyword needs
+                        # a continuation block
+                        last_keyword = self._last_keyword(
+                            lines)
+                        if last_keyword in ("try",):
+                            # Need catch block — keep reading
+                            continue
                         break
+
                     lines.append(cont)
+
+                    # Track if we need more blocks
+                    stripped = cont.strip()
+                    if stripped in ("catch:",
+                                   "catch error:") or \
+                       stripped.startswith("catch ") or \
+                       stripped == "else:":
+                        # These need their own body
+                        continue
+
                 except EOFError:
                     break
 
-            # Add proper indentation to block lines
+            # Add indentation to block lines
             result = []
             result.append(lines[0])
             for l in lines[1:]:
-                # Add 4 spaces if not already indented
-                if not l.startswith(" ") and not l.startswith("\t"):
+                if not l.startswith(" ") and \
+                   not l.startswith("\t") and \
+                   not l.strip().startswith("catch") and \
+                   not l.strip().startswith("else"):
                     result.append("    " + l)
                 else:
                     result.append(l)
             return "\n".join(result)
 
-        return line.strip()
+        return line
+
+    def _last_keyword(self, lines: list) -> str:
+        """Get the last block keyword from lines."""
+        for line in reversed(lines):
+            stripped = line.strip()
+            if stripped.startswith("try"):
+                return "try"
+            if stripped.startswith("if"):
+                return "if"
+            if stripped.startswith("while"):
+                return "while"
+            if stripped.startswith("repeat"):
+                return "repeat"
+        return ""
 
     def _execute(self, source: str):
         """Execute AION source code in the REPL."""

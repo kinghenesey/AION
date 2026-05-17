@@ -17,9 +17,9 @@ from parser.nodes import (
     BooleanLiteral, NullLiteral, ListLiteral, DictLiteral,
     Identifier, BinaryOp, UnaryOp, AssignStatement,
     ShowStatement, IfStatement, RepeatStatement,
-    WhileStatement, TaskStatement, ReturnStatement,
-    UseStatement, ImportStatement, CallExpression,
-    IndexExpression, MethodCall
+    WhileStatement, TryStatement, TaskStatement,
+    ReturnStatement, UseStatement, ImportStatement,
+    CallExpression, IndexExpression, MethodCall
 )
 from interpreter.environment import Environment
 from runtime import ReturnSignal
@@ -174,6 +174,29 @@ class Interpreter:
                     "While loop ran too many times.\n"
                     "  Check your loop condition."
                 )
+    
+    def _exec_TryStatement(self, node: TryStatement):
+        """
+        Execute:
+            try:
+                <body>
+            catch error:
+                <handler>
+        """
+        try:
+            self._execute_block(node.try_body)
+
+        except Exception as e:
+            # Store error message in variable if specified
+            if node.error_var:
+                error_msg = str(e).strip()
+                # Clean up internal Python paths
+                if "\n" in error_msg:
+                    error_msg = error_msg.split("\n")[-1].strip()
+                self.env.set(node.error_var, error_msg)
+
+            # Execute catch body
+            self._execute_block(node.catch_body)
 
     def _exec_TaskStatement(self, node: TaskStatement):
         """

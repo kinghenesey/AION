@@ -312,6 +312,30 @@ class WhileStatement(Node):
     def __repr__(self):
         return f"While({self.condition})"
 
+class TryStatement(Node):
+    """
+    Error handling block.
+    Example:
+        try:
+            result = 10 / 0
+        catch:
+            show "Error caught!"
+
+        try:
+            result = 10 / 0
+        catch error:
+            show "Error: " + error
+    """
+    def __init__(self, try_body: list,
+                 catch_body: list,
+                 error_var: str = None):
+        self.try_body  = try_body
+        self.catch_body = catch_body
+        self.error_var  = error_var
+
+    def __repr__(self):
+        return f"Try(catch_var={self.error_var})"
+
 class CallExpression(Node):
     """
     Calls a task with arguments.

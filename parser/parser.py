@@ -18,9 +18,9 @@ from parser.nodes import (
     BooleanLiteral, NullLiteral, ListLiteral, DictLiteral,
     Identifier, BinaryOp, UnaryOp, AssignStatement,
     ShowStatement, IfStatement, RepeatStatement,
-    WhileStatement, TaskStatement, ReturnStatement,
-    UseStatement, ImportStatement, CallExpression,
-    IndexExpression, MethodCall
+    WhileStatement, TryStatement, TaskStatement,
+    ReturnStatement, UseStatement, ImportStatement,
+    CallExpression, IndexExpression, MethodCall
 )
 
 
@@ -82,6 +82,9 @@ class Parser:
 
         if token.type == TokenType.WHILE:
             return self._parse_while()
+        
+        if token.type == TokenType.TRY:
+            return self._parse_try()
 
         if token.type == TokenType.TASK:
             return self._parse_task()
@@ -172,6 +175,41 @@ class Parser:
         self._skip_newlines()
         body = self._parse_block()
         return WhileStatement(condition, body)
+    
+    def _parse_try(self):
+        """
+        Parse:
+            try:
+                <body>
+            catch:
+                <handler>
+
+            try:
+                <body>
+            catch error:
+                <handler>
+        """
+        self._consume(TokenType.TRY)
+        self._consume(TokenType.COLON)
+        self._expect_newline_or_eof()
+        self._skip_newlines()
+        try_body = self._parse_block()
+
+        self._skip_newlines()
+        self._consume(TokenType.CATCH)
+
+        # Optional error variable: catch error:
+        error_var = None
+        if self._current().type == TokenType.IDENTIFIER:
+            error_var = self._advance().value
+
+        self._consume(TokenType.COLON)
+        self._expect_newline_or_eof()
+        self._skip_newlines()
+        catch_body = self._parse_block()
+
+        return TryStatement(try_body, catch_body,
+                            error_var)
 
     def _parse_task(self):
         """

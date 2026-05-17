@@ -29,6 +29,8 @@ class TokenType(Enum):
     ELSE        = auto()   # else
     REPEAT      = auto()   # repeat
     WHILE       = auto()   # while
+    TRY         = auto()   # try
+    CATCH       = auto()   # catch
     TASK        = auto()   # task (functions)
     RETURN      = auto()   # return
     USE         = auto()   # use (imports)
@@ -84,6 +86,8 @@ KEYWORDS = {
     "else":   TokenType.ELSE,
     "repeat": TokenType.REPEAT,
     "while":  TokenType.WHILE,
+    "try":    TokenType.TRY,
+    "catch":  TokenType.CATCH,
     "task":   TokenType.TASK,
     "return": TokenType.RETURN,
     "use":    TokenType.USE,
