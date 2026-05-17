@@ -336,6 +336,25 @@ class TryStatement(Node):
     def __repr__(self):
         return f"Try(catch_var={self.error_var})"
 
+class ForStatement(Node):
+    """
+    Iterates over a list or range.
+    Example:
+        for item in items:
+            show item
+
+        for name in names:
+            show "Hello " + name
+    """
+    def __init__(self, variable: str,
+                 iterable: Node, body: list):
+        self.variable = variable
+        self.iterable = iterable
+        self.body     = body
+
+    def __repr__(self):
+        return f"For({self.variable} in {self.iterable})"
+
 class CallExpression(Node):
     """
     Calls a task with arguments.

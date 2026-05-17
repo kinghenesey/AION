@@ -18,9 +18,10 @@ from parser.nodes import (
     BooleanLiteral, NullLiteral, ListLiteral, DictLiteral,
     Identifier, BinaryOp, UnaryOp, AssignStatement,
     ShowStatement, IfStatement, RepeatStatement,
-    WhileStatement, TryStatement, TaskStatement,
-    ReturnStatement, UseStatement, ImportStatement,
-    CallExpression, IndexExpression, MethodCall
+    WhileStatement, TryStatement, ForStatement,
+    TaskStatement, ReturnStatement, UseStatement,
+    ImportStatement, CallExpression, IndexExpression,
+    MethodCall
 )
 
 
@@ -85,6 +86,9 @@ class Parser:
         
         if token.type == TokenType.TRY:
             return self._parse_try()
+        
+        if token.type == TokenType.FOR:
+            return self._parse_for()
 
         if token.type == TokenType.TASK:
             return self._parse_task()
@@ -210,6 +214,31 @@ class Parser:
 
         return TryStatement(try_body, catch_body,
                             error_var)
+    
+    def _parse_for(self):
+        """
+        Parse:
+            for <variable> in <iterable>:
+                <body>
+        """
+        self._consume(TokenType.FOR)
+
+        # Variable name
+        variable = self._consume(
+            TokenType.IDENTIFIER).value
+
+        self._consume(TokenType.IN)
+
+        # Iterable expression
+        iterable = self._parse_expression()
+
+        self._consume(TokenType.COLON)
+        self._expect_newline_or_eof()
+        self._skip_newlines()
+
+        body = self._parse_block()
+
+        return ForStatement(variable, iterable, body)
 
     def _parse_task(self):
         """

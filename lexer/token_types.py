@@ -31,6 +31,8 @@ class TokenType(Enum):
     WHILE       = auto()   # while
     TRY         = auto()   # try
     CATCH       = auto()   # catch
+    FOR         = auto()   # for
+    IN          = auto()   # in
     TASK        = auto()   # task (functions)
     RETURN      = auto()   # return
     USE         = auto()   # use (imports)
@@ -88,6 +90,8 @@ KEYWORDS = {
     "while":  TokenType.WHILE,
     "try":    TokenType.TRY,
     "catch":  TokenType.CATCH,
+    "for":    TokenType.FOR,
+    "in":     TokenType.IN,
     "task":   TokenType.TASK,
     "return": TokenType.RETURN,
     "use":    TokenType.USE,

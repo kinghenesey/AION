@@ -17,9 +17,10 @@ from parser.nodes import (
     BooleanLiteral, NullLiteral, ListLiteral, DictLiteral,
     Identifier, BinaryOp, UnaryOp, AssignStatement,
     ShowStatement, IfStatement, RepeatStatement,
-    WhileStatement, TryStatement, TaskStatement,
-    ReturnStatement, UseStatement, ImportStatement,
-    CallExpression, IndexExpression, MethodCall
+    WhileStatement, TryStatement, ForStatement,
+    TaskStatement, ReturnStatement, UseStatement,
+    ImportStatement, CallExpression, IndexExpression,
+    MethodCall
 )
 from interpreter.environment import Environment
 from runtime import ReturnSignal
@@ -197,6 +198,38 @@ class Interpreter:
 
             # Execute catch body
             self._execute_block(node.catch_body)
+    
+    def _exec_ForStatement(self, node: ForStatement):
+        """
+        Execute:
+            for item in items:
+                <body>
+        """
+        iterable = self._execute_node(node.iterable)
+
+        # Support lists, strings, dicts and ranges
+        if isinstance(iterable, str):
+            items = list(iterable)
+        elif isinstance(iterable, dict):
+            items = list(iterable.keys())
+        elif isinstance(iterable, list):
+            items = iterable
+        elif isinstance(iterable, range):
+            items = list(iterable)
+        else:
+            raise RuntimeError(
+                f"Cannot iterate over "
+                f"'{type(iterable).__name__}'.\n"
+                f"  Use a list, string, or range."
+            )
+
+        for item in items:
+            # Set loop variable in current scope
+            self.env.set(node.variable, item)
+            # Execute body without new scope so
+            # loop variable is accessible
+            self._execute_block(
+                node.body, new_scope=False)
 
     def _exec_TaskStatement(self, node: TaskStatement):
         """
