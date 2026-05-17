@@ -28,23 +28,26 @@ def load() -> dict:
 
     return {
         # Core AI functions
-        "ai_ask":      lambda prompt: provider.ask(str(prompt)),
-        "ai_summarize": lambda text: provider.summarize(str(text)),
+        "ai_ask":      lambda prompt: provider.ask(
+                           str(prompt)),
+        "ai_summarize": lambda text: provider.summarize(
+                           str(text)),
         "ai_generate": lambda instruction: provider.generate(
-                            str(instruction)),
+                           str(instruction)),
         "ai_classify": lambda text, labels: provider.classify(
-                            str(text),
-                            [l.strip() for l in str(labels).split(",")]
-                        ),
+                           str(text),
+                           [l.strip() for l in
+                            str(labels).split(",")]
+                       ),
+        "ai_stream":   lambda prompt: provider.stream(
+                           str(prompt)),
 
         # Provider info
-        "ai_provider": lambda: provider.name,
+        "ai_provider":  lambda: provider.name,
         "ai_available": lambda: provider.is_available,
 
         # Utility
-        "ai_mock":     lambda prompt: (
-                            f"[MOCK] {prompt}"
-                        ),
+        "ai_mock":     lambda prompt: f"[MOCK] {prompt}",
     }
 
 

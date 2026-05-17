@@ -62,6 +62,13 @@ class BaseProvider(ABC):
         """
         pass
 
+    def stream(self, prompt: str) -> str:
+        """
+        Stream a response word by word.
+        Falls back to ask() if not implemented.
+        """
+        return self.ask(prompt)
+
     @property
     @abstractmethod
     def name(self) -> str:

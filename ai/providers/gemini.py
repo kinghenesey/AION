@@ -100,3 +100,40 @@ class GeminiProvider(BaseProvider):
                 f"Gemini API error: {str(e)}\n"
                 f"  Check your API key and try again."
             )
+    
+    def stream(self, prompt: str):
+        """
+        Stream a response from Gemini word by word.
+        Prints text as it arrives like ChatGPT.
+        """
+        if not self.is_available:
+            raise RuntimeError(
+                "No Gemini API key found.\n"
+                "  Add GEMINI_API_KEY to your .env file."
+            )
+
+        try:
+            from google import genai
+            client = self._get_client()
+
+            print(f"\033[96m", end="", flush=True)
+
+            response = client.models.generate_content_stream(
+                model=self.MODEL,
+                contents=prompt
+            )
+
+            full_response = []
+            for chunk in response:
+                if chunk.text:
+                    print(chunk.text,
+                          end="", flush=True)
+                    full_response.append(chunk.text)
+
+            print(f"\033[0m")
+            return "".join(full_response)
+
+        except Exception as e:
+            raise RuntimeError(
+                f"Gemini streaming error: {str(e)}"
+            )

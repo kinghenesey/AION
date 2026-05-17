@@ -63,6 +63,20 @@ class MockProvider(BaseProvider):
 
         return (f"[MOCK AI] Received: '{prompt}' — "
                 f"Simulated response active.")
+    
+    def stream(self, prompt: str) -> str:
+        """Simulate streaming with mock responses."""
+        import time
+        response = self.ask(prompt)
+        words    = response.split()
+
+        print(f"\033[96m", end="", flush=True)
+        for word in words:
+            print(word + " ", end="", flush=True)
+            time.sleep(0.05)
+        print(f"\033[0m")
+
+        return response
 
     def summarize(self, text: str) -> str:
         """Return a mock summary of any text."""
