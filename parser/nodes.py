@@ -98,6 +98,23 @@ class IndexExpression(Node):
     def __repr__(self):
         return f"Index({self.collection}[{self.index}])"
 
+class MethodCall(Node):
+    """
+    A method call on a value.
+    Example:
+        name.upper()
+        items.length()
+        text.replace("a", "b")
+    """
+    def __init__(self, object: Node,
+                 method: str, args: list):
+        self.object = object
+        self.method = method
+        self.args   = args
+
+    def __repr__(self):
+        return f"MethodCall({self.object}.{self.method})"
+
 class DictLiteral(Node):
     """
     A dictionary of key-value pairs.

@@ -263,6 +263,7 @@ class Lexer:
             "]": TokenType.RBRACKET,
             "{": TokenType.LBRACE,
             "}": TokenType.RBRACE,
+            ".": TokenType.DOT
         }
 
         if char in single:

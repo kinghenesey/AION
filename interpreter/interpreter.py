@@ -19,7 +19,7 @@ from parser.nodes import (
     ShowStatement, IfStatement, RepeatStatement,
     WhileStatement, TaskStatement, ReturnStatement,
     UseStatement, ImportStatement, CallExpression,
-    IndexExpression
+    IndexExpression, MethodCall
 )
 from interpreter.environment import Environment
 from runtime import ReturnSignal
@@ -426,6 +426,99 @@ class Interpreter:
                 f"Cannot index into "
                 f"'{type(collection).__name__}'."
             )
+    
+    def _exec_MethodCall(self, node: MethodCall):
+        """Execute a method call like name.upper()."""
+        obj    = self._execute_node(node.object)
+        method = node.method
+        args   = [self._execute_node(a) for a in node.args]
+
+        # ── String methods ────────────────────────────────
+        if isinstance(obj, str):
+            methods = {
+                "upper":      lambda: obj.upper(),
+                "lower":      lambda: obj.lower(),
+                "title":      lambda: obj.title(),
+                "strip":      lambda: obj.strip(),
+                "trim":       lambda: obj.strip(),
+                "reverse":    lambda: obj[::-1],
+                "length":     lambda: len(obj),
+                "split":      lambda: obj.split(
+                                  args[0] if args else " "),
+                "replace":    lambda: obj.replace(
+                                  args[0], args[1]),
+                "contains":   lambda: args[0] in obj,
+                "starts_with": lambda: obj.startswith(
+                                  args[0]),
+                "ends_with":  lambda: obj.endswith(
+                                  args[0]),
+                "find":       lambda: obj.find(args[0]),
+                "count":      lambda: obj.count(args[0]),
+                "repeat":     lambda: obj * int(args[0]),
+            }
+
+            if method in methods:
+                return methods[method]()
+
+            raise RuntimeError(
+                f"String has no method '{method}'.\n"
+                f"  Available: "
+                f"{', '.join(methods.keys())}"
+            )
+
+        # ── List methods ──────────────────────────────────
+        if isinstance(obj, list):
+            methods = {
+                "length":   lambda: len(obj),
+                "append":   lambda: obj.append(args[0]),
+                "remove":   lambda: obj.remove(args[0]),
+                "reverse":  lambda: list(reversed(obj)),
+                "sort":     lambda: sorted(obj),
+                "first":    lambda: obj[0] if obj else None,
+                "last":     lambda: obj[-1] if obj else None,
+                "contains": lambda: args[0] in obj,
+                "join":     lambda: (args[0] if args
+                                else ", ").join(
+                                [str(i) for i in obj]),
+                "pop":      lambda: obj.pop(),
+                "clear":    lambda: obj.clear(),
+            }
+
+            if method in methods:
+                return methods[method]()
+
+            raise RuntimeError(
+                f"List has no method '{method}'.\n"
+                f"  Available: "
+                f"{', '.join(methods.keys())}"
+            )
+
+        # ── Dict methods ──────────────────────────────────
+        if isinstance(obj, dict):
+            methods = {
+                "keys":     lambda: list(obj.keys()),
+                "values":   lambda: list(obj.values()),
+                "length":   lambda: len(obj),
+                "has":      lambda: args[0] in obj,
+                "get":      lambda: obj.get(
+                                args[0],
+                                args[1] if len(args) > 1
+                                else None),
+                "remove":   lambda: obj.pop(args[0], None),
+            }
+
+            if method in methods:
+                return methods[method]()
+
+            raise RuntimeError(
+                f"Dictionary has no method '{method}'.\n"
+                f"  Available: "
+                f"{', '.join(methods.keys())}"
+            )
+
+        raise RuntimeError(
+            f"'{type(obj).__name__}' has no methods."
+        )
 
     def _exec_Identifier(self, node: Identifier):
         """Look up a variable's value in the current scope."""

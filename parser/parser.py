@@ -20,7 +20,7 @@ from parser.nodes import (
     ShowStatement, IfStatement, RepeatStatement,
     WhileStatement, TaskStatement, ReturnStatement,
     UseStatement, ImportStatement, CallExpression,
-    IndexExpression
+    IndexExpression, MethodCall
 )
 
 
@@ -378,12 +378,31 @@ class Parser:
             else:
                 expr = Identifier(token.value)
 
-            # Check for index access items[0]
-            while self._current().type == TokenType.LBRACKET:
-                self._advance()
-                index = self._parse_expression()
-                self._consume(TokenType.RBRACKET)
-                expr = IndexExpression(expr, index)
+            # Check for chained operations
+            while True:
+                # Index access: items[0]
+                if self._current().type == TokenType.LBRACKET:
+                    self._advance()
+                    index = self._parse_expression()
+                    self._consume(TokenType.RBRACKET)
+                    expr = IndexExpression(expr, index)
+
+                # Method call: name.upper()
+                elif (self._current().type == TokenType.DOT):
+                    self._advance()  # consume dot
+                    method = self._consume(
+                        TokenType.IDENTIFIER).value
+                    self._consume(TokenType.LPAREN)
+                    args = []
+                    while self._current().type != TokenType.RPAREN:
+                        args.append(self._parse_expression())
+                        if self._current().type == TokenType.COMMA:
+                            self._advance()
+                    self._consume(TokenType.RPAREN)
+                    expr = MethodCall(expr, method, args)
+
+                else:
+                    break
 
             return expr
         

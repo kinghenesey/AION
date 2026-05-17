@@ -58,6 +58,7 @@ class TokenType(Enum):
 
     # ── Punctuation ───────────────────────────────────────────
     COLON       = auto()   # :
+    DOT         = auto()   # .
     COMMA       = auto()   # ,
     LPAREN      = auto()   # (
     RPAREN      = auto()   # )
