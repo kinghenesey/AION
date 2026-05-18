@@ -95,6 +95,23 @@ class MockProvider(BaseProvider):
         print(f"\033[0m")
 
         return response
+    
+    def generate_image(self, prompt: str,
+                       filename: str = "generated_image.png") -> str:
+        """Mock image generation."""
+        import os
+
+        # Create a simple placeholder text file
+        mock_path = filename.replace(".png", "_mock.txt")
+        with open(mock_path, "w") as f:
+            f.write(f"[MOCK IMAGE]\n"
+                    f"Prompt: {prompt}\n"
+                    f"This would be a real image "
+                    f"with an API key.")
+
+        print(f"\033[93m⚡ Mock image created: "
+              f"'{mock_path}'\033[0m")
+        return mock_path
 
     def summarize(self, text: str) -> str:
         """Return a mock summary of any text."""

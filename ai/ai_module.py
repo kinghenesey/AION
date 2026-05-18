@@ -41,6 +41,12 @@ def load() -> dict:
                        ),
         "ai_stream":   lambda prompt: provider.stream(
                            str(prompt)),
+        
+        # Image generation
+        "ai_image":    lambda prompt, filename="generated_image.png": (
+                           provider.generate_image(
+                               str(prompt), str(filename))
+                       ),
 
         # Memory system
         "ai_remember":  lambda text: provider.remember(

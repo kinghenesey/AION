@@ -150,3 +150,58 @@ class GeminiProvider(BaseProvider):
             raise RuntimeError(
                 f"Gemini streaming error: {str(e)}"
             )
+    
+    def generate_image(self, prompt: str,
+                       filename: str = "generated_image.png") -> str:
+        """
+        Generate an image from a text prompt.
+        Uses Pollinations AI — free, no API key needed.
+        """
+        import urllib.request
+        import urllib.parse
+        import time
+
+        print(f"\033[96m⚡ Generating image...\033[0m",
+              flush=True)
+
+        encoded = urllib.parse.quote(prompt)
+        url     = (f"https://image.pollinations.ai/"
+                   f"prompt/{encoded}"
+                   f"?width=512&height=512&nologo=true"
+                   f"&seed={int(time.time())}")
+
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Accept": "image/png,image/*,*/*",
+            }
+        )
+
+        # Try up to 3 times
+        for attempt in range(3):
+            try:
+                print(f"\033[96m  Attempt {attempt + 1}/3...\033[0m",
+                      flush=True)
+                with urllib.request.urlopen(
+                        req, timeout=120) as response:
+                    image_data = response.read()
+
+                with open(filename, "wb") as f:
+                    f.write(image_data)
+
+                print(f"\033[92m✓ Image saved: "
+                      f"'{filename}'\033[0m")
+                return filename
+
+            except Exception as e:
+                if attempt < 2:
+                    print(f"\033[93m  Retrying...\033[0m",
+                          flush=True)
+                    time.sleep(3)
+                else:
+                    raise RuntimeError(
+                        f"Image generation failed "
+                        f"after 3 attempts: {str(e)}\n"
+                        f"  Try again later."
+                    )

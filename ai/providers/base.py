@@ -54,6 +54,14 @@ class BaseProvider(ABC):
 
     def stream(self, prompt: str) -> str:
         return self.ask(prompt)
+    
+    def generate_image(self, prompt: str,
+                       filename: str = "generated_image.png") -> str:
+        """Generate an image from a text prompt."""
+        raise NotImplementedError(
+            f"Image generation not supported by "
+            f"'{self.name}' provider."
+        )
 
     @property
     @abstractmethod
