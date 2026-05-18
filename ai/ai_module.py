@@ -42,6 +42,15 @@ def load() -> dict:
         "ai_stream":   lambda prompt: provider.stream(
                            str(prompt)),
 
+        # Memory system
+        "ai_remember":  lambda text: provider.remember(
+                            str(text)),
+        "ai_forget":    lambda: provider.forget(),
+        "ai_memory_on": lambda: setattr(
+                            provider,
+                            'memory_enabled', True),
+        "ai_recall":    lambda: provider.get_memory_context(),
+
         # Provider info
         "ai_provider":  lambda: provider.name,
         "ai_available": lambda: provider.is_available,

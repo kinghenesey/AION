@@ -25,6 +25,7 @@ class AnthropicProvider(BaseProvider):
     MAX_TOKENS = 1024
 
     def __init__(self):
+        super().__init__()
         self.api_key = os.environ.get("ANTHROPIC_API_KEY", "")
         self._client = None
 

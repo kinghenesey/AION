@@ -21,6 +21,9 @@ class MockProvider(BaseProvider):
     Returns realistic-looking fake responses.
     """
 
+    def __init__(self):
+        super().__init__()
+
     @property
     def name(self) -> str:
         return "mock"
@@ -31,6 +34,21 @@ class MockProvider(BaseProvider):
 
     def ask(self, prompt: str) -> str:
         """Return a mock answer to any question."""
+        # Include memory context
+        if self.memory:
+            facts = [m["content"] for m in self.memory
+                     if m["role"] == "user"]
+            if facts:
+                context = " | ".join(facts[-3:])
+                if any(word in prompt.lower()
+                       for word in ["what", "who",
+                                    "my", "i am", "name"]):
+                    return (f"[MOCK with memory] "
+                            f"Based on what I know: "
+                            f"{context}. "
+                            f"Regarding '{prompt}': "
+                            f"I remember your context.")
+
         prompt_lower = prompt.lower()
 
         # Some realistic mock responses

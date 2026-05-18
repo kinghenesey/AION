@@ -17,6 +17,7 @@ class GeminiProvider(BaseProvider):
     MODEL = "gemini-2.5-flash"
 
     def __init__(self):
+        super().__init__()
         self.api_key = os.environ.get("GEMINI_API_KEY", "")
         self._client = None
 
@@ -88,11 +89,23 @@ class GeminiProvider(BaseProvider):
 
         try:
             from google import genai
+
+            # Add memory context if available
+            full_prompt = self.get_memory_context() + prompt
+
             client   = self._get_client()
             response = client.models.generate_content(
                 model=self.MODEL,
-                contents=prompt
+                contents=full_prompt
             )
+
+            # Save response to memory if enabled
+            if self.memory_enabled:
+                self.memory.append({
+                    "role":    "assistant",
+                    "content": response.text
+                })
+
             return response.text
 
         except Exception as e:
