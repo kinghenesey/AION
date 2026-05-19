@@ -163,12 +163,24 @@ class AIONRunner:
             return 1
 
         except AIONNameError as e:
+            variables = {}
+            try:
+                # Only show user-defined variables
+                # not built-in functions
+                variables = {
+                    k: v for k, v in
+                    interpreter.globals.variables.items()
+                    if not callable(v)
+                }
+            except Exception:
+                pass
             display_error(
                 error_type="NameError",
                 message=str(e),
                 source=self.source,
                 filepath=self.filepath,
                 line=getattr(e, "line", 0),
+                variables=variables,
             )
             return 1
 
