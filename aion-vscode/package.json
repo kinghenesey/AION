@@ -1,0 +1,59 @@
+{
+  "name": "aion-language",
+  "displayName": "AION - AI Native Programming Language",
+  "description": "Syntax highlighting for the AION AI-Native Programming Language",
+  "version": "1.0.0",
+  "publisher": "emmanuel-king-christopher",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "aion",
+    "ai",
+    "programming language",
+    "nigeria",
+    "syntax highlighting"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kinghenesey/AION"
+  },
+  "icon": "icon.png",
+  "contributes": {
+    "languages": [
+      {
+        "id": "aion",
+        "aliases": [
+          "AION",
+          "aion"
+        ],
+        "extensions": [
+          ".aion"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "aion",
+        "scopeName": "source.aion",
+        "path": "./syntaxes/aion.tmLanguage.json"
+      }
+    ],
+    "themes": []
+  },
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:aion",
+    "workspaceContains:**/*.aion"
+  ],
+  "scripts": {
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^2.0.0"
+  }
+}
