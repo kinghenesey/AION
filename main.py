@@ -35,7 +35,7 @@ _load_env()
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import AION_VERSION, AION_CODENAME, Color
-from cli    import print_banner, print_error, print_info
+from cli    import print_banner, print_error, print_info, print_success
 from runner import AIONRunner
 
 
@@ -58,7 +58,9 @@ v{AION_VERSION} · {AION_CODENAME}
   python main.py clean                    Remove cache files
   python main.py debug <file.aion>        Visual debugger
   python main.py repl                     Interactive shell
-  python main.py ide                      Launch Web IDE
+  python main.py ide                      Launch Web 
+  python main.py format <file.aion>        Format code style
+  python main.py format --check <file>     Check formatting
 
 {Color.BOLD}Deployment:{Color.RESET}
   python main.py export <file.aion>       Export to HTML/script
@@ -128,7 +130,8 @@ def parse_args(argv: list) -> dict:
     commands = {"run", "test", "build", "new",
                     "info", "clean", "export",
                     "package", "publish", "deploy",
-                    "repl", "marketplace", "debug", "ide"}
+                    "repl", "marketplace", "debug",
+                    "ide", "format"}
     if values and values[0] in commands:
         args["command"] = values[0]
         if len(values) > 1:
@@ -253,6 +256,19 @@ def main():
             start_ide(port=port)
             sys.exit(0)
         
+        if cmd == "format":
+            from formatter import format_file, format_directory
+            check_only = "--check" in argv
+            if arg and not arg.startswith("--"):
+                success = format_file(
+                    arg, check_only=check_only)
+            else:
+                print_info("Formatting all .aion files...")
+                count = format_directory("examples")
+                print_success(
+                    f"Formatted {count} files")
+            sys.exit(0)
+
         if cmd == "marketplace":
             from cli.marketplace_cmd import cmd_marketplace
             # arg could be subcommand, values[1] could be the query
