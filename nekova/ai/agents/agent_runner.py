@@ -14,6 +14,7 @@
 
 from nekova.ai.agents.agent import Agent
 from nekova.ai.providers import get_provider
+from nekova.ai.think_engine import ask_structured
 
 
 class AgentRunner:
@@ -92,11 +93,45 @@ class AgentRunner:
                         task: str) -> str:
         """Run agent with tools available."""
         results = []
+        tool_schemas = getattr(agent, "_tool_schemas", {})
 
         # Try each relevant tool
         for tool_name, tool in agent.tools.items():
             try:
-                tool_result = tool.run(task)
+                schema = tool_schemas.get(tool_name)
+                if schema:
+                    # Phase 28 step 4: extract just the fields this
+                    # tool actually declared, instead of handing it
+                    # the entire raw plan text like every tool used to
+                    # get (schema-less tools below still do, and
+                    # always will — this is opt-in per tool). This is
+                    # the fix for the design gap behind the original
+                    # calculate() eval() vulnerability: agent_runner
+                    # used to forward the whole plan to every tool
+                    # with no way for a tool to ask for "just the
+                    # numbers" or "just the query" — see agents_module.py.
+                    extracted = ask_structured(
+                        self.provider,
+                        f"Extract the following from this task: {task}",
+                        "schema", schema=schema,
+                        use_memory=False, use_history=False,
+                    )
+                    if isinstance(extracted, dict) and len(schema) == 1:
+                        # Single-field schema: unwrap to a bare value,
+                        # matching the single-argument convention
+                        # every built-in tool already uses
+                        # (calculate(expr), search(query), ...) —
+                        # calculate(CalcInput) with CalcInput just
+                        # {expression: text} means the tool receives
+                        # that expression string directly, not a
+                        # {"expression": ...} dict it would have to
+                        # unpack itself.
+                        tool_arg = next(iter(extracted.values()))
+                    else:
+                        tool_arg = extracted
+                else:
+                    tool_arg = task
+                tool_result = tool.run(tool_arg)
                 results.append(
                     f"[{tool_name}]: {tool_result}"
                 )
