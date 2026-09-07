@@ -17,6 +17,7 @@ import io
 import re
 import sys
 import unittest
+from unittest.mock import patch, MagicMock
 
 from nekova.lexer.lexer import Lexer
 from nekova.parser.parser import Parser
@@ -368,6 +369,69 @@ class TestSchemaTypedToolInput(AgentTestBase):
                 '    tools: [calculate(NotASchema)]\n'
             )
         self.assertIn("isn't a schema", str(ctx.exception))
+
+
+class TestBuiltinToolModelOverride(AgentTestBase):
+    """
+    Bug found while reviewing Phase 28's flagged loose ends:
+    _agent_tool used to capture `provider = get_provider()` ONCE at
+    tool-registration time, and every built-in tool lambda (search,
+    summarize, generate, classify, and the generic custom-tool
+    fallback) closed over that one frozen instance forever. Since
+    _exec_AgentDefinition always processes 'tools:' before 'model:'
+    regardless of the order they're written in an agent block, this
+    meant a declared agent's model: override NEVER reached any
+    built-in AI-backed tool call — only the no-tools path and the
+    final summarization step ever saw it (see AgentRunner.run()'s own
+    fix from step 2). Fixed by resolving the provider fresh on every
+    tool call and applying agent.model at that point instead.
+    """
+
+    def test_search_tool_uses_agents_model(self):
+        run(
+            'use agents\n'
+            'agent "Bot":\n'
+            '    tools: [search]\n'
+            '    model: "gpt-4o"\n'
+        )
+        agent = _agents["Bot"]
+        fake_provider = MagicMock()
+        fake_provider.ask.return_value = "result"
+        with patch("nekova.ai.agents_module.get_provider",
+                   return_value=fake_provider):
+            agent.tools["search"].run("query")
+        self.assertEqual(fake_provider.model, "gpt-4o")
+
+    def test_custom_fallback_tool_uses_agents_model(self):
+        """The generic 'just ask AI' fallback for unrecognized tool
+        names must get the same treatment as the named built-ins."""
+        run(
+            'use agents\n'
+            'agent "Bot":\n'
+            '    tools: [some_unknown_name]\n'
+            '    model: "claude-3"\n'
+        )
+        agent = _agents["Bot"]
+        fake_provider = MagicMock()
+        fake_provider.ask.return_value = "result"
+        with patch("nekova.ai.agents_module.get_provider",
+                   return_value=fake_provider):
+            agent.tools["some_unknown_name"].run("hi")
+        self.assertEqual(fake_provider.model, "claude-3")
+
+    def test_tool_model_reflects_none_when_agent_has_no_model(self):
+        run(
+            'use agents\n'
+            'agent "Bot":\n'
+            '    tools: [search]\n'
+        )
+        agent = _agents["Bot"]
+        fake_provider = MagicMock()
+        fake_provider.ask.return_value = "result"
+        with patch("nekova.ai.agents_module.get_provider",
+                   return_value=fake_provider):
+            agent.tools["search"].run("query")
+        self.assertIsNone(fake_provider.model)
 
 
 if __name__ == "__main__":
