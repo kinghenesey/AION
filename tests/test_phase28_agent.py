@@ -257,5 +257,118 @@ class TestTaskAsToolResolution(AgentTestBase):
         self.assertIn("calculate", out)
 
 
+class TestSchemaTypedToolInput(AgentTestBase):
+    """
+    Phase 28 step 4 — the actual fix for the design gap behind the
+    original calculate() eval() vulnerability: agent_runner.py used
+    to hand every tool the agent's ENTIRE raw plan text, unparsed and
+    untyped, with no way for a tool to ask for "just the numbers" or
+    "just the query". A tool declared with a schema — e.g.
+    calculate(CalcInput) — now gets only the fields that schema
+    names, extracted via the exact same _coerce_schema machinery
+    `think ... as Person` already uses, instead of the whole plan.
+
+    These tests use a custom task-as-tool (Phase 28 step 3) as a
+    probe that echoes back exactly what argument it received, so the
+    contrast between "gets the raw plan" and "gets an extracted
+    value" is direct and unambiguous rather than inferred from a
+    built-in tool's behavior.
+    """
+
+    def test_schema_typed_tool_does_not_receive_the_raw_plan_text(self):
+        marker = "SECRET_PLAN_MARKER_XYZ"
+        out = run(
+            'use agents\n'
+            'schema CalcInput:\n'
+            '    expression: text\n'
+            'task capture_arg(x):\n'
+            '    return "GOT: " + x\n'
+            'agent "Bot":\n'
+            '    tools: [capture_arg(CalcInput)]\n'
+            f'show agent_run("Bot", "{marker}")\n'
+        )
+        # The agent's own diagnostic printout echoes the raw task
+        # argument regardless of tool behavior (that's separate from
+        # what any given tool receives) — what actually matters is
+        # the tool's own result, which must show neither the marker
+        # nor any of the plan-wrapping text a schema-less tool would
+        # have seen.
+        self.assertIn("[capture_arg]: GOT:", out)
+        tool_result_line = next(
+            line for line in out.splitlines() if "[capture_arg]:" in line
+        )
+        self.assertNotIn(marker, tool_result_line)
+        self.assertNotIn("thinking about", tool_result_line)
+        self.assertNotIn("Available tools", tool_result_line)
+
+    def test_schemaless_tool_still_receives_the_full_plan_text(self):
+        """Contrast case: a tool with NO schema is completely
+        unaffected by this feature — same as before step 4 landed."""
+        marker = "SECRET_PLAN_MARKER_XYZ"
+        out = run(
+            'use agents\n'
+            'task capture_arg(x):\n'
+            '    return "GOT: " + x\n'
+            'agent "Bot":\n'
+            '    tools: [capture_arg]\n'
+            f'show agent_run("Bot", "{marker}")\n'
+        )
+        self.assertIn(marker, out)
+        self.assertIn("thinking about", out)
+
+    def test_single_field_schema_unwraps_to_a_bare_value(self):
+        """A one-field schema should hand the tool the bare value
+        directly (matching the single-arg convention every built-in
+        tool already uses), not a {"expression": ...} dict it would
+        have to unpack itself."""
+        out = run(
+            'use agents\n'
+            'schema CalcInput:\n'
+            '    expression: text\n'
+            'task capture_type(x):\n'
+            '    return type_of(x)\n'
+            'agent "Bot":\n'
+            '    tools: [capture_type(CalcInput)]\n'
+            'show agent_run("Bot", "anything")\n'
+        )
+        self.assertIn("str", out)
+
+    def test_multi_field_schema_passes_a_dict(self):
+        """A multi-field schema has no single unambiguous value to
+        unwrap to, so the tool gets the whole extracted dict."""
+        out = run(
+            'use agents\n'
+            'schema TwoFields:\n'
+            '    a: text\n'
+            '    b: text\n'
+            'task capture_type(x):\n'
+            '    return type_of(x)\n'
+            'agent "Bot":\n'
+            '    tools: [capture_type(TwoFields)]\n'
+            'show agent_run("Bot", "anything")\n'
+        )
+        self.assertIn("dict", out)
+
+    def test_unknown_schema_reference_raises_clear_error(self):
+        with self.assertRaises(NEKOVARuntimeError) as ctx:
+            run(
+                'use agents\n'
+                'agent "Bot":\n'
+                '    tools: [calculate(NoSuchSchema)]\n'
+            )
+        self.assertIn("no such schema", str(ctx.exception).lower())
+
+    def test_non_schema_reference_raises_clear_error(self):
+        with self.assertRaises(NEKOVARuntimeError) as ctx:
+            run(
+                'use agents\n'
+                'shape NotASchema:\n'
+                '    name str\n'
+                'agent "Bot":\n'
+                '    tools: [calculate(NotASchema)]\n'
+            )
+        self.assertIn("isn't a schema", str(ctx.exception))
+
+
 if __name__ == "__main__":
     unittest.main()
