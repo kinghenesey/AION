@@ -158,20 +158,33 @@ def _agent_tool(agent_name: str,
                 description: str = "") -> str:
     """Add a tool to an agent."""
     agent = _get_agent(agent_name)
-    provider = get_provider()
+
+    # Resolve the provider fresh on every call, not once at
+    # registration time — this used to capture a single `provider =
+    # get_provider()` instance here and close over it in every tool
+    # lambda below. That meant an agent's `model:` override (Phase 28)
+    # never reached built-in AI-backed tools at all: _exec_AgentDefinition
+    # always processes 'tools:' before 'model:' regardless of the
+    # order they're written in, so registration-time capture happened
+    # before agent.model was even set. Reading it live here means
+    # every call reflects whatever agent.model actually is right now.
+    def _tool_provider():
+        p = get_provider()
+        p.model = getattr(agent, "model", None)
+        return p
 
     # Built-in tool functions
     tools = {
-        "search": lambda query: provider.ask(
+        "search": lambda query: _tool_provider().ask(
             f"Search for information about: {query}"
         ),
-        "summarize": lambda text: provider.summarize(
+        "summarize": lambda text: _tool_provider().summarize(
             str(text)
         ),
-        "generate": lambda prompt: provider.generate(
+        "generate": lambda prompt: _tool_provider().generate(
             str(prompt)
         ),
-        "classify": lambda text: provider.classify(
+        "classify": lambda text: _tool_provider().classify(
             str(text), ["positive", "negative", "neutral"]
         ),
         "save": lambda content: _save_to_file(
@@ -191,7 +204,7 @@ def _agent_tool(agent_name: str,
         agent.add_tool(
             str(tool_name),
             str(description),
-            lambda x: get_provider().ask(
+            lambda x: _tool_provider().ask(
                 f"{tool_name}: {x}"
             )
         )
