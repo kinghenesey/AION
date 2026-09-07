@@ -4654,9 +4654,40 @@ class Interpreter(AsyncInterpreterMixin, ClassInterpreterMixin):
                 else:
                     _agent_tool(agent_name, tool_name, "")
                 if schema_name is not None:
+                    # Phase 28 step 4: resolve the schema reference
+                    # into an actual {field: type} coercion dict RIGHT
+                    # NOW, while we still have interpreter/environment
+                    # access — agent_runner.py (where this actually
+                    # gets used) has neither, so threading a live
+                    # schema name through to it and hoping to resolve
+                    # it later isn't an option. Same introspection
+                    # mechanism db_create_from_schema already uses
+                    # (__nekova_schema_fields__), for the same reason:
+                    # self-contained data beats a reference that needs
+                    # context nothing downstream has.
+                    try:
+                        schema_ctor = self.env.get(schema_name)
+                    except NameError:
+                        raise NEKOVARuntimeError(
+                            f"Agent '{agent_name}': tool '{tool_name}' "
+                            f"references schema '{schema_name}', but "
+                            f"no such schema is defined."
+                        )
+                    schema_fields = getattr(
+                        schema_ctor, "__nekova_schema_fields__", None
+                    )
+                    if schema_fields is None:
+                        raise NEKOVARuntimeError(
+                            f"Agent '{agent_name}': '{schema_name}' "
+                            f"isn't a schema — a tool can only be "
+                            f"typed with a `schema` declaration, e.g. "
+                            f"calculate(CalcInput)."
+                        )
                     if not hasattr(agent, "_tool_schemas"):
                         agent._tool_schemas = {}
-                    agent._tool_schemas[tool_name] = schema_name
+                    agent._tool_schemas[tool_name] = {
+                        fname: ftype for fname, ftype, _default in schema_fields
+                    }
 
         if "model" in node.fields:
             agent.model = str(self._execute_node(node.fields["model"]))
