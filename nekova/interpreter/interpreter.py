@@ -1459,9 +1459,24 @@ class Interpreter(AsyncInterpreterMixin, ClassInterpreterMixin):
 
         except Exception as e:
             if node.error_var:
-                # Build a clean message — strip leading whitespace/newlines
+                # Build a clean message — strip leading whitespace/newlines.
+                # NEKOVA's own error messages consistently follow
+                # "<description>.\n  <hint/example>" (verified across
+                # every multi-line raise site in this file) — the
+                # description is always the FIRST line, any hint or
+                # example is indented on the line(s) after. This used
+                # to take the LAST line instead, which silently
+                # dropped the actual description and kept only the
+                # hint — e.g. a caught divide-by-zero error rendered
+                # as just "Check your divisor value." with no mention
+                # of what actually went wrong. Built-in Python
+                # exceptions (ZeroDivisionError, KeyError, etc.)
+                # essentially never contain an embedded newline of
+                # their own, so this only ever affects NEKOVA's own
+                # deliberately-formatted messages — exactly the ones
+                # this convention describes.
                 raw = str(e).strip()
-                msg = raw.split("\n")[-1].strip() if "\n" in raw else raw
+                msg = raw.split("\n")[0].strip() if "\n" in raw else raw
 
                 # Determine a friendly type name
                 type_name = type(e).__name__
